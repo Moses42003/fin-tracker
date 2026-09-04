@@ -47,3 +47,7 @@ app-example
 !.vscode/settings.json
 !.vscode/extentions.json
 .history
+
+.claude/
+AGENTS.md
+CLAUDE.md
