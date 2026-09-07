@@ -26,7 +26,7 @@ export default function HomeTab() {
             </Link>
           </View>
 
-          <View className="flex gap-7">
+          <View className="flex gap-9">
             <TransactionCard />
             <TransactionCard />
             <TransactionCard income />

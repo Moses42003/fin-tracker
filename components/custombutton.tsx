@@ -10,7 +10,7 @@ interface Props {
 export default function CustomButton({ name, onPress, color, bgColor }: Props) {
   return (
     <TouchableOpacity
-      className="flex py-4 rounded-2xl my-3"
+      className="flex py-4 rounded-2xl my-3 flex-1"
       activeOpacity={0.7}
       style={{
         shadowColor: "gray",

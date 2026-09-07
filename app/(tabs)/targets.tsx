@@ -8,7 +8,7 @@ export default function TargetsTab() {
     <SafeAreaView className="flex flex-1">
       {/* top view header */}
       <View className="flex flex-row items-center justify-between my-3 py-5 px-4">
-        <Text className="text-2xl font-bold">My Targets</Text>
+        <Text className="text-3xl font-bold">My Targets</Text>
         <TouchableOpacity
           activeOpacity={0.7}
           className="flex flex-row items-center gap-1"
