@@ -17,7 +17,7 @@ export default function TargetCard({ amountDone, name, totalAmount }: Props) {
       </View>
       <View className="flex flex-1 flex-col gap-3 p-4">
         <View className="flex flex-row justify-between">
-          <Text className="text-xl font-semibold">Buy a Bike</Text>
+          <Text className="text-xl font-semibold">{name}</Text>
           <View className="w-24 h-24 rounded-full border-4 border-green-600 flex items-center justify-center">
             <Text className="text-xl font-bold">
               {((amountDone / totalAmount) * 100).toFixed()}%
@@ -27,11 +27,11 @@ export default function TargetCard({ amountDone, name, totalAmount }: Props) {
 
         <View className="flex flex-1 flex-row justify-end">
           <Text className="text-green-600 font-semibold text-lg">
-            GH₵ {amountDone ? amountDone : 0}
+            GH₵ {amountDone ? amountDone.toLocaleString("en-US") : 0}
           </Text>
           <Text className="font-semibold text-lg text-gray-400">
             {" "}
-            / GH₵ {totalAmount ? totalAmount : 0}
+            / GH₵ {totalAmount ? totalAmount.toLocaleString("en-US") : 0}
           </Text>
         </View>
       </View>
