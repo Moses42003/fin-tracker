@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
@@ -9,10 +10,11 @@ interface Props {
 export default function TargetCard({ amountDone, name, totalAmount }: Props) {
   return (
     <TouchableOpacity
-      className="bg-slate-200 flex flex-1 rounded-2xl flex-row over overflow-hidden mb-3"
+      className="bg-slate-100 flex flex-1 rounded-2xl flex-row over overflow-hidden mb-3 border-2 border-gray-300"
       activeOpacity={0.7}
+      onPress={() => router.push(`/targets/${name}`)}
     >
-      <View className="bg-slate-400 flex flex-[.5] items-center justify-center">
+      <View className="bg-slate-300 flex flex-[.5] items-center justify-center rounded-r-2xl">
         <Text className="font-bold">Image of target</Text>
       </View>
       <View className="flex flex-1 flex-col gap-3 p-4">

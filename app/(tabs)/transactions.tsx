@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TransactionTab() {
   return (
-    <SafeAreaView className="pt-5 px-5">
+    <SafeAreaView className="pt-5 px-5 bg-white flex flex-1">
       <View className="flex gap-4">
         <View className="flex flex-row items-center justify-between">
           <Text className="text-3xl font-bold">Transactions</Text>
@@ -20,7 +20,10 @@ export default function TransactionTab() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className="mt-5">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="mt-5 flex flex-1"
+      >
         <View>
           <Text className="text-lg font-bold mb-5">May 15, 2016</Text>
           <View className="flex p-2 gap-10">

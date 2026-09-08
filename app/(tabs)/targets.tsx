@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TargetsTab() {
   return (
-    <SafeAreaView className="flex flex-1">
+    <SafeAreaView className="flex flex-1 bg-white">
       {/* top view header */}
       <View className="flex flex-row items-center justify-between my-3 py-5 px-4">
         <Text className="text-3xl font-bold">My Targets</Text>
