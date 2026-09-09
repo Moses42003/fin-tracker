@@ -1,8 +1,9 @@
 import BackText from "@/components/backtext";
 import QuickActionButton from "@/components/quickaction";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TargetPage() {
@@ -14,7 +15,12 @@ export default function TargetPage() {
         <BackText title="My Targets" />
 
         {/* Three Dot: Menu */}
-        <View className="w-16 h-6 rounded-2xl bg-slate-300"></View>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          className="w-16 h-6 rounded-2xl flex items-center justify-center"
+        >
+          <Ionicons name="ellipsis-horizontal" size={25} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>

@@ -1,6 +1,5 @@
-import CustomButton from "@/components/custombutton";
 import TransactionCard from "@/components/transcard";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TransactionTab() {
@@ -8,15 +7,37 @@ export default function TransactionTab() {
     <SafeAreaView className="pt-5 px-5 bg-white flex flex-1">
       <View className="flex gap-4">
         <View className="flex flex-row items-center justify-between">
-          <Text className="text-3xl font-bold">Transactions</Text>
+          <Text className="text-3xl font-bold">Records</Text>
 
           <View className="bg-slate-200 rounded-xl w-24 h-10"></View>
         </View>
 
         <View className="flex flex-row items-center gap-3 mb-3">
-          <CustomButton name="All" bgColor="#2e1065" color="white" />
-          <CustomButton name="Income" color="#2e1065" bgColor="#e2e8f0" />
-          <CustomButton name="Expense" color="#2e1065" bgColor="#e2e8f0" />
+          {/* All */}
+          <TouchableOpacity
+            className="flex flex-1 h-12 rounded-2xl bg-violet-900 items-center justify-center"
+            activeOpacity={0.7}
+          >
+            <Text className="font-semibold text-xl text-white text-center">
+              All
+            </Text>
+          </TouchableOpacity>
+
+          {/* Income */}
+          <TouchableOpacity
+            className="flex flex-1 h-12 rounded-2xl bg-slate-200 items-center justify-center"
+            activeOpacity={0.7}
+          >
+            <Text className="font-semibold text-xl text-center">Income</Text>
+          </TouchableOpacity>
+
+          {/* Expense */}
+          <TouchableOpacity
+            className="flex flex-1 h-12 rounded-2xl bg-slate-200 items-center justify-center"
+            activeOpacity={0.7}
+          >
+            <Text className="font-semibold text-xl text-center">Expense</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
