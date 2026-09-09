@@ -15,8 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeTab() {
   const donutData = [
-    { text: "Needs", value: 50, color: "green" },
-    { text: "Wants", value: 30, color: "violet" },
+    { text: "Income", value: 50, color: "green" },
+    { text: "Expense", value: 30, color: "red" },
     { text: "Savings", value: 20, color: "orange" },
   ];
 
