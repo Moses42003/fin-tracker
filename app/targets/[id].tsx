@@ -4,10 +4,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { PieChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TargetPage() {
   const { id } = useLocalSearchParams();
+
+  const total = 3000;
+  const saved = 1950;
+
+  const remaining = Math.max(total - saved, 0);
+
+  const percentage = ((saved / total) * 100).toFixed();
+
+  const pieData = [
+    { value: saved, color: "green" },
+    { value: remaining, color: "#e5e7eb" },
+  ];
+
   return (
     <SafeAreaView className="pt-5 px-4 flex flex-1">
       <View className="flex flex-row items-center justify-between mb-8">
@@ -53,7 +67,18 @@ export default function TargetPage() {
             <View className="flex flex-row justify-between items-center mb-3">
               {/* Circle Progress */}
               <View className="w-36 h-36 rounded-full border-8 border-green-600 flex items-center justify-center">
-                <Text className="text-2xl font-bold">65%</Text>
+                <PieChart
+                  data={pieData}
+                  donut
+                  radius={70}
+                  innerRadius={50}
+                  backgroundColor="white"
+                  centerLabelComponent={() => (
+                    <View className="items-center justify-center">
+                      <Text className="font-bold text-xl">{percentage}%</Text>
+                    </View>
+                  )}
+                />
               </View>
 
               <View className="gap-3">
@@ -61,13 +86,17 @@ export default function TargetPage() {
                   <Text className="text-lg text-gray-400 font-semibold">
                     Saved
                   </Text>
-                  <Text className="text-2xl font-semibold">GH₵ 1,950.00</Text>
+                  <Text className="text-2xl font-semibold">
+                    GH₵ {saved.toLocaleString()}
+                  </Text>
                 </View>
                 <View className="gap-2">
                   <Text className="text-lg text-gray-400 font-semibold">
-                    Saved
+                    Total
                   </Text>
-                  <Text className="text-2xl font-semibold">GH₵ 3,000.00</Text>
+                  <Text className="text-2xl font-semibold">
+                    GH₵ {total.toLocaleString()}
+                  </Text>
                 </View>
               </View>
             </View>

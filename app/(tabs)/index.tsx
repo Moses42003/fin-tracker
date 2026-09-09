@@ -2,11 +2,33 @@ import GreetingCard from "@/components/greetingcard";
 import TotalAmountCard from "@/components/totalamountcard";
 import TransactionCard from "@/components/transcard";
 import { router } from "expo-router";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { PieChart } from "react-native-gifted-charts";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeTab() {
+  const donutData = [
+    { text: "Needs", value: 50, color: "green" },
+    { text: "Wants", value: 30, color: "violet" },
+    { text: "Savings", value: 20, color: "orange" },
+  ];
+
+  const [renderChart, setRenderCart] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setRenderCart(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <View className="flex flex-1 bg-violet-950 pt-10">
+    <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex px-5 mb-4">
         <GreetingCard name="CodeTech" />
         <TotalAmountCard />
@@ -23,34 +45,55 @@ export default function HomeTab() {
             <View className="h-8 w-20 bg-slate-200 rounded-2xl"></View>
           </View>
 
-          <View className="flex flex-row items-center flex-1 p-3 rounded-2xl border-2 border-gray-300 gap-3">
-            {/* Circle Analytic */}
-            <View className="w-32 h-32 rounded-full border-[15px] border-violet-700 flex items-center justify-center">
-              <Text className="text-2xl font-bold">72%</Text>
-            </View>
+          {renderChart ? (
+            <View
+              className="flex items-center flex-1 p-3 rounded-2xl border-2 border-gray-300 gap-3 bg-white h-max"
+              style={{
+                shadowColor: "gray",
+                shadowOffset: { width: 0, height: 3 },
+                shadowRadius: 2,
+                shadowOpacity: 0.4,
+              }}
+            >
+              {/* Circle Analytic */}
+              <View className="h-[180px] items-center justify-center">
+                <PieChart
+                  // key={chartKey}
+                  data={donutData}
+                  donut
+                  radius={90}
+                  innerRadius={55}
+                  strokeColor="white"
+                  strokeWidth={4}
+                  backgroundColor="white"
+                  centerLabelComponent={() => (
+                    <View className="items-center justify-center">
+                      <Text className="font-bold text-3xl">72%</Text>
+                    </View>
+                  )}
+                />
+              </View>
 
-            <View className="flex gap-5">
-              <View className="flex flex-row items-center gap-3">
-                <View className="bg-green-500 w-3 h-3 rounded-full"></View>
-                <Text className="font-semibold">Needs</Text>
-                <Text className="font-semibold">55%</Text>
-                <Text className="font-semibold">GH₵ 800.00</Text>
-              </View>
-              <View className="flex flex-row items-center justify-between">
-                <View className="bg-violet-500 w-3 h-3 rounded-full"></View>
-                <Text className="font-semibold">Wants</Text>
-                <Text className="font-semibold">25%</Text>
-                <Text className="font-semibold">GH₵ 700.00</Text>
-              </View>
-
-              <View className="flex flex-row items-center justify-between">
-                <View className="bg-red-500 w-3 h-3 rounded-full"></View>
-                <Text className="font-semibold">Savings</Text>
-                <Text className="font-semibold">37%</Text>
-                <Text className="font-semibold">GH₵ 500.00</Text>
+              {/* Lengends */}
+              <View className="flex-row flex-wrap justify-center gap-3">
+                {donutData.map((item) => (
+                  <View key={item.text} className="flex-row items-center gap-2">
+                    <View
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <Text className="text-gray-500 text-sm font-semibold">
+                      {item.text} ({item.value}%)
+                    </Text>
+                  </View>
+                ))}
               </View>
             </View>
-          </View>
+          ) : (
+            <View className="w-full h-72 bg-gray-200 rounded-3xl items-center justify-center">
+              <ActivityIndicator size="small" />
+            </View>
+          )}
         </View>
         {/* Recent Transaction card list */}
         <View className="px-3">
@@ -76,6 +119,6 @@ export default function HomeTab() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
