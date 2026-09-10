@@ -1,6 +1,7 @@
 import CustomButton from "@/components/custombutton";
 import GreetingCard from "@/components/greetingcard";
 import SettingOption from "@/components/settingoption";
+import { router } from "expo-router";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,7 +28,11 @@ export default function ProfileTab() {
           name="About App"
         />
 
-        <CustomButton name="Log Out" color="red" />
+        <CustomButton
+          name="Log Out"
+          color="red"
+          onPress={() => router.replace("/(auth)/login")}
+        />
       </ScrollView>
     </SafeAreaView>
   );

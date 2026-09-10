@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { Text, TouchableOpacity } from "react-native";
 
 interface Props {
-  title: string;
+  title?: string;
 }
 
 export default function BackText({ title }: Props) {

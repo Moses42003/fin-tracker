@@ -1,0 +1,66 @@
+import CustomButton from "@/components/custombutton";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React from "react";
+import {
+  ImageBackground,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SplahScreen() {
+  return (
+    <ImageBackground
+      source={require("../../assets/BG Asset/image_bg_one.png")}
+      className="flex-1 px-5 pt-16"
+    >
+      <SafeAreaView className="flex-1">
+        <View className="flex-1 items-center gap-3">
+          <View className="w-24 h-24 rounded-3xl bg-blue-600 justify-center items-center">
+            <Ionicons name="analytics" size={40} color="white" />
+          </View>
+          <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center">
+              <Text className="text-6xl font-bold text-white">Goal</Text>
+              <Text className="text-6xl font-bold text-blue-500">Flow</Text>
+            </View>
+          </View>
+
+          <Text className="text-2xl font-semibold text-gray-200">
+            Track. Save. Achieve
+          </Text>
+          <View className="px-14">
+            <Text className="text-xl text-center text-wrap font-normal text-gray-200">
+              Take Control of your money, reach your goals, and build a better
+              financial future.
+            </Text>
+          </View>
+        </View>
+
+        <View className="flex justify-center items-center mb-4 gap-2">
+          <CustomButton
+            name="Get Started"
+            color="white"
+            bgColor="#2563eb"
+            icon="arrow-forward"
+            onPress={() => router.push("/(auth)/signup")}
+          />
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push("/(auth)/login")}
+            className="items-center justify-center"
+          >
+            <Text className="text-lg font-semibold text-white">
+              I already have an account
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+
+      <StatusBar barStyle={"light-content"} />
+    </ImageBackground>
+  );
+}

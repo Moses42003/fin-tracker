@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity } from "react-native";
 
 interface Props {
@@ -5,15 +6,23 @@ interface Props {
   onPress?: () => void;
   color?: string;
   bgColor?: string;
+  icon?: "arrow-forward" | string;
 }
 
-export default function CustomButton({ name, onPress, color, bgColor }: Props) {
+export default function CustomButton({
+  name,
+  onPress,
+  color,
+  bgColor,
+  icon,
+}: Props) {
   return (
     <TouchableOpacity
-      className="flex py-4 rounded-2xl my-3 flex-1"
+      className="flex py-5 rounded-3xl my-3 w-full flex-row items-center gap-2 justify-center"
       activeOpacity={0.7}
+      onPress={onPress}
       style={{
-        shadowColor: "gray",
+        shadowColor: bgColor !== "white" ? bgColor : "gray",
         shadowOffset: { width: 0, height: 3 },
         shadowRadius: 2,
         shadowOpacity: 0.4,
@@ -23,6 +32,7 @@ export default function CustomButton({ name, onPress, color, bgColor }: Props) {
       <Text className="font-bold text-xl text-center" style={{ color: color }}>
         {name}
       </Text>
+      <Ionicons name={icon} size={20} color={color} />
     </TouchableOpacity>
   );
 }
