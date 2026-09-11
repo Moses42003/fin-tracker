@@ -1,9 +1,11 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
+import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
+import { formatPhone, normalizePhone } from "@/lib/authValidation";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -16,6 +18,44 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ForgotPassword() {
+  const [target, setTarget] = useState("");
+  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleRequestCode() {
+    setError("");
+    setSubmitted(true);
+    if (!target.trim()) {
+      setError("Enter your email or phone number");
+      return;
+    }
+
+    const normalizedTarget = target.includes("@")
+      ? target.trim().toLowerCase()
+      : normalizePhone(target);
+    setLoading(true);
+    try {
+      await apiFetch(AUTH_ENDPOINTS.requestPasswordReset, {
+        method: "POST",
+        body: { target: normalizedTarget },
+        timeoutMs: 20000,
+        timeoutMessage:
+          "The reset email service is taking too long. Please try again later.",
+      });
+      router.push({
+        pathname: "/(auth)/emailverify",
+        params: { email: normalizedTarget, purpose: "reset", method: "reset" },
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to send reset code",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <SafeAreaView className="flex-1 px-4 py-3 bg-white">
       <View className="mb-2">
@@ -45,15 +85,33 @@ export default function ForgotPassword() {
             <InputText
               placeHolder="Email or Phone Number"
               icon="call-outline"
-              keyboardType="number-pad"
+              keyboardType="email-address"
+              onChangeText={(value) =>
+                value.includes("@")
+                  ? setTarget(value)
+                  : setTarget(formatPhone(value))
+              }
+              value={target}
+              editable={!loading}
+              error={submitted && !target.trim()}
             />
+            {error ? (
+              <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border border-red-200 px-3 py-3">
+                <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                <Text className="flex-1 text-red-700 font-semibold">
+                  {error}
+                </Text>
+              </View>
+            ) : null}
           </View>
 
           <CustomButton
             name="Send Reset Code"
             color="white"
             bgColor="#2563eb"
-            onPress={() => router.navigate("/(auth)/emailverify")}
+            loading={loading}
+            disabled={loading}
+            onPress={handleRequestCode}
           />
 
           <View className="flex-row items-center justify-center mt-3 gap-2">

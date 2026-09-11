@@ -1,7 +1,9 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
+import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useRef, useState } from "react";
 import {
   Keyboard,
@@ -17,37 +19,114 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EmailVerification() {
+  const {
+    email = "",
+    phone = "",
+    purpose = "signup",
+  } = useLocalSearchParams<{
+    email?: string;
+    phone?: string;
+    purpose?: string;
+  }>();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const inputRefs = useRef([]);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const target = (email || phone).trim();
 
-  // @ts-ignore
-  function handleChange(text, index) {
+  function handleChange(text: string, index: number) {
+    setError("");
+    const digits = text.replace(/\D/g, "").slice(0, otp.length);
     const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
 
-    const isComplete = newOtp.every((value) => value !== "");
-
-    if (isComplete) {
-      Keyboard.dismiss();
+    if (!digits) {
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
     }
 
-    if (text && index < 5) {
-      setTimeout(() => {
-        // @ts-ignore
-        inputRefs.current[index + 1]?.focus();
-      }, 50);
+    digits.split("").forEach((digit, offset) => {
+      if (index + offset < newOtp.length) {
+        newOtp[index + offset] = digit;
+      }
+    });
+    setOtp(newOtp);
+
+    const nextIndex = Math.min(index + digits.length, newOtp.length - 1);
+    if (nextIndex < newOtp.length - 1) {
+      inputRefs.current[nextIndex]?.focus();
+    }
+
+    if (newOtp.every((value) => value !== "")) {
+      Keyboard.dismiss();
     }
   }
 
-  // @ts-ignore
-  function handleKeyPress(e, index) {
-    if (e.nativeEvent.key === "Backspace" && !otp[index] && index > 0) {
-      setTimeout(() => {
-        // @ts-ignore
-        inputRefs.current[index - 1]?.focus();
-      }, 50);
+  function handleKeyPress(e: { nativeEvent: { key: string } }, index: number) {
+    if (e.nativeEvent.key !== "Backspace") {
+      return;
+    }
+
+    if (otp[index]) {
+      const newOtp = [...otp];
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
+    }
+
+    if (index > 0) {
+      const newOtp = [...otp];
+      newOtp[index - 1] = "";
+      setOtp(newOtp);
+      inputRefs.current[index - 1]?.focus();
+    }
+  }
+
+  function clearCode() {
+    setOtp(["", "", "", "", "", ""]);
+    setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  }
+
+  async function handleVerify() {
+    const code = otp.join("");
+    setError("");
+    if (code.length !== otp.length) {
+      setError("Enter the 6-digit verification code");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (purpose === "reset") {
+        router.push({
+          pathname: "/(auth)/resetpass",
+          params: { target, code },
+        });
+        return;
+      }
+
+      const data = await apiFetch(
+        purpose === "login"
+          ? AUTH_ENDPOINTS.verifyLoginOtp
+          : AUTH_ENDPOINTS.verifyOtp,
+        {
+          method: "POST",
+          body: { target, code },
+        },
+      );
+      const token = data.token || data.access_token;
+      if (token) {
+        await SecureStore.setItemAsync("auth_token", token);
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/(auth)/login");
+      }
+    } catch (err) {
+      clearCode();
+      setError(err instanceof Error ? err.message : "Unable to verify email");
+    } finally {
+      setLoading(false);
     }
   }
   return (
@@ -76,7 +155,11 @@ export default function EmailVerification() {
               We&apos;ve sent a 6-digit code to
             </Text>
             <Text className="text-xl text-gray-600 font-semibold">
-              moses@goalflow.com
+              {target || "your email address"}
+            </Text>
+            <Text className="text-sm text-gray-500 text-center px-8">
+              Enter exactly 6 numbers. We&apos;ll send target and code to the
+              verification service.
             </Text>
           </View>
 
@@ -91,10 +174,12 @@ export default function EmailVerification() {
                 }}
                 value={digit}
                 onChangeText={(text) => handleChange(text, index)}
+                editable={!loading}
+                style={error ? { borderColor: "#ef4444" } : undefined}
                 keyboardType="number-pad"
                 onKeyPress={(e) => handleKeyPress(e, index)}
                 autoFocus={index === 0}
-                maxLength={1}
+                maxLength={6}
                 placeholder={(index + 1).toString()}
                 placeholderTextColor="#d1d5db"
                 className="w-12 h-14 text-2xl font-bold text-center text-gray-800 border-2 border-gray-400 rounded-2xl"
@@ -102,9 +187,11 @@ export default function EmailVerification() {
             ))}
           </View>
 
-          <View className="flex-row items-center justify-center gap-2 mt-5 mb-7">
+          <View className="flex-row items-center justify-center gap-2 mt-5 mb-7 flex-wrap">
             <Text className="text-lg font-semibold text-gray-500">
-              Did&apos;t receive the code?
+              {purpose === "login"
+                ? "Need a new code? Go back and log in again."
+                : "Didn't receive the code? Check your spam folder."}
             </Text>
             <TouchableOpacity
               activeOpacity={0.7}
@@ -112,17 +199,25 @@ export default function EmailVerification() {
               onPress={() => router.back()}
             >
               <Text className="text-lg font-semibold text-blue-600">
-                Resend
+                {purpose === "login" ? "Try again" : "Back"}
               </Text>
             </TouchableOpacity>
           </View>
+
+          {error ? (
+            <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border border-red-200 px-3 py-3">
+              <Ionicons name="alert-circle" size={20} color="#dc2626" />
+              <Text className="flex-1 text-red-700 font-semibold">{error}</Text>
+            </View>
+          ) : null}
 
           <CustomButton
             name="Verify"
             bgColor="#2563eb"
             color="white"
             icon="arrow-forward"
-            onPress={() => router.replace("/(tabs)")}
+            disabled={loading}
+            onPress={handleVerify}
           />
 
           <TouchableOpacity

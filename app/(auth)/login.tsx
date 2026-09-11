@@ -1,21 +1,77 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
+import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
+import { formatPhone, normalizePhone } from "@/lib/authValidation";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import * as SecureStore from "expo-secure-store";
+import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
+    setError("");
+    setSubmitted(true);
+    const missingFields = [
+      !phone.trim() && "email or phone number",
+      !password && "password",
+    ].filter(Boolean);
+    if (missingFields.length) {
+      setError(`Please complete: ${missingFields.join(" and ")}.`);
+      return;
+    }
+
+    const identifier = phone.includes("@")
+      ? phone.trim().toLowerCase()
+      : normalizePhone(phone);
+    setLoading(true);
+    try {
+      const data = await apiFetch(AUTH_ENDPOINTS.login, {
+        method: "POST",
+        body: { username: identifier, password },
+        form: true,
+      });
+      const token = data.token || data.access_token;
+      if (!token) {
+        throw new Error("Login succeeded but no access token was returned");
+      }
+      await SecureStore.setItemAsync("auth_token", token);
+      router.replace("/(tabs)");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to log in";
+      if (
+        /verify your registration code|verify.*registration|not verified/i.test(
+          message,
+        )
+      ) {
+        router.push({
+          pathname: "/(auth)/emailverify",
+          params: { email: identifier, phone: identifier, purpose: "login" },
+        });
+        return;
+      }
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <SafeAreaView className="flex-1 px-4 py-3 bg-white">
       <View className="mb-2">
@@ -48,16 +104,37 @@ export default function LoginScreen() {
 
           <View className="flex gap-4 py-5 mb-3">
             <InputText
-              placeHolder="Phone Number"
+              placeHolder="Email or phone number"
               icon="call-outline"
-              keyboardType="number-pad"
+              keyboardType="email-address"
+              onChangeText={(value) =>
+                value.includes("@")
+                  ? setPhone(value)
+                  : setPhone(formatPhone(value))
+              }
+              value={phone}
+              editable={!loading}
+              error={submitted && !phone.trim()}
             />
 
             <InputText
               placeHolder="Enter your password"
               icon="lock-closed-outline"
               secure
+              onChangeText={setPassword}
+              value={password}
+              editable={!loading}
+              error={submitted && !password}
             />
+
+            {error ? (
+              <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border border-red-200 px-3 py-3">
+                <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                <Text className="flex-1 text-red-700 font-semibold">
+                  {error}
+                </Text>
+              </View>
+            ) : null}
 
             <View className="flex-row items-center px-3 justify-end">
               <TouchableOpacity
@@ -75,7 +152,9 @@ export default function LoginScreen() {
             name="Log In"
             color="white"
             bgColor="#2563eb"
-            onPress={() => router.navigate("/(auth)/emailverify")}
+            disabled={loading}
+            loading={loading}
+            onPress={handleLogin}
           />
 
           <View className="flex-row items-center my-4">
