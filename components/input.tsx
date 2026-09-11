@@ -17,7 +17,7 @@ export default function InputText({
 }: Props) {
   const inputRef = useRef(null);
   return (
-    <View className="flex-1 border-2 border-gray-300 p-2 rounded-2xl bg-white my-3">
+    <View className="w-full border-2 border-gray-300 p-2 rounded-2xl bg-white my-3">
       <View className="flex-row gap-3 items-center">
         <Ionicons
           // @ts-ignore

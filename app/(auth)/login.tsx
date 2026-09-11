@@ -48,9 +48,9 @@ export default function LoginScreen() {
 
           <View className="flex gap-4 py-5 mb-3">
             <InputText
-              placeHolder="Email Address"
-              icon="mail-outline"
-              keyboardType="email-address"
+              placeHolder="Phone Number"
+              icon="call-outline"
+              keyboardType="number-pad"
             />
 
             <InputText
@@ -60,7 +60,10 @@ export default function LoginScreen() {
             />
 
             <View className="flex-row items-center px-3 justify-end">
-              <TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push("/(auth)/forgotpass")}
+              >
                 <Text className="text-lg font-semibold text-blue-500">
                   Forgot password
                 </Text>
@@ -100,7 +103,7 @@ export default function LoginScreen() {
               onPress={() => router.push("/signup")}
             >
               <Text className="text-lg font-semibold text-blue-600">
-                Sign up
+                Create an account
               </Text>
             </TouchableOpacity>
           </View>

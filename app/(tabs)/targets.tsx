@@ -1,6 +1,12 @@
 import TargetCard from "@/components/targetcard";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TargetsTab() {
@@ -19,7 +25,10 @@ export default function TargetsTab() {
           </Text>
         </TouchableOpacity>
       </View>
-      <ScrollView className="p-4 rounded-t-2xl">
+      <ScrollView
+        className="p-4 rounded-t-2xl"
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex">
           <TargetCard name="Buy a Bike" amountDone={1000} totalAmount={3000} />
           <TargetCard name="New Laptop" amountDone={1200} totalAmount={3000} />
@@ -31,6 +40,7 @@ export default function TargetsTab() {
           />
         </View>
       </ScrollView>
+      <StatusBar barStyle={"dark-content"} />
     </SafeAreaView>
   );
 }

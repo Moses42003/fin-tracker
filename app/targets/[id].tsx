@@ -3,7 +3,13 @@ import QuickActionButton from "@/components/quickaction";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ImageBackground,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { LineChart, PieChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -67,13 +73,14 @@ export default function TargetPage() {
             </View>
 
             {/* Image Space */}
-            <View className="flex items-center justify-center flex-1 h-64 bg-blue-600 rounded-xl">
-              <Text className="text-2xl font-bold">Image Here</Text>
-            </View>
+            <ImageBackground
+              source={require("../../assets/BG Asset/image_bg_one.png")}
+              className="flex items-center justify-center flex-1 h-64 overflow-hidden rounded-t-xl"
+            ></ImageBackground>
           </View>
 
           {/* Circle Progress Loader Analytics */}
-          <View className="px-6 py-4 rounded-t-2xl bg-white">
+          <View className="px-6 py-4 bg-white">
             <View className="flex flex-row justify-between items-center mb-3">
               {/* Circle Progress */}
               <View className="w-36 h-36 rounded-full border-8 border-green-600 flex items-center justify-center">

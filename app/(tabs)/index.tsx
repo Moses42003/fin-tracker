@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
+  StatusBar,
   Text,
   TouchableOpacity,
   View,
@@ -30,7 +31,10 @@ export default function HomeTab() {
   return (
     <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex px-5 mb-4">
-        <GreetingCard name="CodeTech" />
+        <GreetingCard
+          name="CodeTech"
+          iconOnPress={() => router.push("/notification")}
+        />
         <TotalAmountCard />
       </View>
       <ScrollView
@@ -46,7 +50,9 @@ export default function HomeTab() {
           </View>
 
           {renderChart ? (
-            <View
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push("/transaction/analytics")}
               className="flex items-center flex-1 p-3 rounded-2xl border-2 border-gray-300 gap-3 bg-white h-max"
               style={{
                 shadowColor: "gray",
@@ -88,7 +94,7 @@ export default function HomeTab() {
                   </View>
                 ))}
               </View>
-            </View>
+            </TouchableOpacity>
           ) : (
             <View className="w-full h-72 bg-gray-200 rounded-3xl items-center justify-center">
               <ActivityIndicator size="small" />
@@ -118,7 +124,10 @@ export default function HomeTab() {
             <TransactionCard income title="Gift" color="orange" />
           </View>
         </View>
+
+        <View className="flex-1 h-10"></View>
       </ScrollView>
+      <StatusBar barStyle={"light-content"} />
     </SafeAreaView>
   );
 }

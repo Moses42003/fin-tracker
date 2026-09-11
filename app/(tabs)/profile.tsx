@@ -2,7 +2,7 @@ import CustomButton from "@/components/custombutton";
 import GreetingCard from "@/components/greetingcard";
 import SettingOption from "@/components/settingoption";
 import { router } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileTab() {
@@ -34,6 +34,8 @@ export default function ProfileTab() {
           onPress={() => router.replace("/(auth)/login")}
         />
       </ScrollView>
+
+      <StatusBar barStyle={"light-content"} />
     </SafeAreaView>
   );
 }

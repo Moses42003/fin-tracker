@@ -4,15 +4,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -106,6 +106,15 @@ export default function EmailVerification() {
             <Text className="text-lg font-semibold text-gray-500">
               Did&apos;t receive the code?
             </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              className=""
+              onPress={() => router.back()}
+            >
+              <Text className="text-lg font-semibold text-blue-600">
+                Resend
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <CustomButton
