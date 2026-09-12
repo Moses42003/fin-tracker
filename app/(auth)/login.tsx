@@ -22,11 +22,13 @@ export default function LoginScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
     setError("");
+    setNeedsVerification(false);
     setSubmitted(true);
     const missingFields = [
       !phone.trim() && "email or phone number",
@@ -60,11 +62,7 @@ export default function LoginScreen() {
           message,
         )
       ) {
-        router.push({
-          pathname: "/(auth)/emailverify",
-          params: { email: identifier, phone: identifier, purpose: "login" },
-        });
-        return;
+        setNeedsVerification(true);
       }
       setError(message);
     } finally {
@@ -136,6 +134,28 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
+            {needsVerification ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                className="flex-row items-center justify-center gap-2 rounded-2xl bg-blue-50 border border-blue-200 px-3 py-3"
+                onPress={() =>
+                  router.push({
+                    pathname: "/(auth)/emailverify",
+                    params: {
+                      email: identifierForVerification(phone),
+                      phone: identifierForVerification(phone),
+                      purpose: "signup",
+                    },
+                  })
+                }
+              >
+                <Ionicons name="mail-outline" size={20} color="#2563eb" />
+                <Text className="text-blue-700 font-semibold">
+                  Verify registration code
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+
             <View className="flex-row items-center px-3 justify-end">
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -191,4 +211,10 @@ export default function LoginScreen() {
       <StatusBar barStyle={"dark-content"} />
     </SafeAreaView>
   );
+}
+
+function identifierForVerification(value: string) {
+  return value.includes("@")
+    ? value.trim().toLowerCase()
+    : normalizePhone(value);
 }

@@ -34,6 +34,8 @@ export default function EmailVerification() {
 
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const target = (email || phone).trim();
+  const isEmailTarget = target.includes("@");
+  const targetLabel = isEmailTarget ? "email address" : "phone number";
 
   function handleChange(text: string, index: number) {
     setError("");
@@ -106,15 +108,10 @@ export default function EmailVerification() {
         return;
       }
 
-      const data = await apiFetch(
-        purpose === "login"
-          ? AUTH_ENDPOINTS.verifyLoginOtp
-          : AUTH_ENDPOINTS.verifyOtp,
-        {
-          method: "POST",
-          body: { target, code },
-        },
-      );
+      const data = await apiFetch(AUTH_ENDPOINTS.verifyOtp, {
+        method: "POST",
+        body: { target, code },
+      });
       const token = data.token || data.access_token;
       if (token) {
         await SecureStore.setItemAsync("auth_token", token);
@@ -124,7 +121,9 @@ export default function EmailVerification() {
       }
     } catch (err) {
       clearCode();
-      setError(err instanceof Error ? err.message : "Unable to verify email");
+      setError(
+        err instanceof Error ? err.message : `Unable to verify ${targetLabel}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -148,11 +147,17 @@ export default function EmailVerification() {
         >
           <View className="items-center gap-3 flex-1 justify-center">
             <View className="w-32 h-32 rounded-3xl bg-blue-600 justify-center items-center my-5">
-              <Ionicons name="mail-unread" size={70} color="white" />
+              <Ionicons
+                name={isEmailTarget ? "mail-unread" : "call"}
+                size={70}
+                color="white"
+              />
             </View>
-            <Text className="text-4xl font-bold">Verify Your Email</Text>
-            <Text className="text-lg text-gray-500 font-semibold">
-              We&apos;ve sent a 6-digit code to
+            <Text className="text-4xl font-bold">
+              Verify Your {isEmailTarget ? "Email" : "Phone"}
+            </Text>
+            <Text className="text-lg text-gray-500 font-semibold text-center">
+              We&apos;ve requested a 6-digit code for your {targetLabel}
             </Text>
             <Text className="text-xl text-gray-600 font-semibold">
               {target || "your email address"}
@@ -191,7 +196,9 @@ export default function EmailVerification() {
             <Text className="text-lg font-semibold text-gray-500">
               {purpose === "login"
                 ? "Need a new code? Go back and log in again."
-                : "Didn't receive the code? Check your spam folder."}
+                : isEmailTarget
+                  ? "No email yet? Check spam or try again later."
+                  : "No text yet? Check your signal or try again later."}
             </Text>
             <TouchableOpacity
               activeOpacity={0.7}

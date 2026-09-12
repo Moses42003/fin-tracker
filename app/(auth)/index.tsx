@@ -3,11 +3,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ImageBackground,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
+    ImageBackground,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -57,6 +57,18 @@ export default function SplahScreen() {
               I already have an account
             </Text>
           </TouchableOpacity>
+          {__DEV__ ? (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.replace("/(tabs)")}
+              className="flex-row items-center justify-center gap-2 mt-4 rounded-2xl border border-white/60 px-4 py-3"
+            >
+              <Ionicons name="construct-outline" size={18} color="white" />
+              <Text className="text-sm font-semibold text-white">
+                Continue to app (development)
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </SafeAreaView>
 

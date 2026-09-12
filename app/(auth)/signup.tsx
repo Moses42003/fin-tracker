@@ -87,6 +87,9 @@ export default function SignUpScreen() {
           phone: normalizedPhone,
           password,
         },
+        timeoutMs: 90000,
+        timeoutMessage:
+          "Account creation or email delivery is taking longer than expected. Please try again.",
       });
 
       router.push({
@@ -105,6 +108,16 @@ export default function SignUpScreen() {
       );
       setCanContinueToVerification(recoverable);
       setError(message);
+      if (recoverable) {
+        router.push({
+          pathname: "/(auth)/emailverify",
+          params: {
+            email: email.trim().toLowerCase(),
+            phone: normalizePhone(phone),
+            purpose: "signup",
+          },
+        });
+      }
     } finally {
       setLoading(false);
     }

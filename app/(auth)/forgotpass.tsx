@@ -2,7 +2,12 @@ import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
 import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
-import { formatPhone, normalizePhone } from "@/lib/authValidation";
+import {
+    formatPhone,
+    isValidEmail,
+    isValidPhone,
+    normalizePhone,
+} from "@/lib/authValidation";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -19,6 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ForgotPassword() {
   const [target, setTarget] = useState("");
+  const [mode, setMode] = useState<"email" | "phone">("email");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,21 +33,28 @@ export default function ForgotPassword() {
     setError("");
     setSubmitted(true);
     if (!target.trim()) {
-      setError("Enter your email or phone number");
+      setError(`Enter your ${mode} address.`);
       return;
     }
 
-    const normalizedTarget = target.includes("@")
-      ? target.trim().toLowerCase()
-      : normalizePhone(target);
+    const normalizedTarget =
+      mode === "email" ? target.trim().toLowerCase() : normalizePhone(target);
+    if (mode === "email" && !isValidEmail(normalizedTarget)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (mode === "phone" && !isValidPhone(normalizedTarget)) {
+      setError("Enter a valid phone number.");
+      return;
+    }
     setLoading(true);
     try {
       await apiFetch(AUTH_ENDPOINTS.requestPasswordReset, {
         method: "POST",
         body: { target: normalizedTarget },
-        timeoutMs: 20000,
+        timeoutMs: 90000,
         timeoutMessage:
-          "The reset email service is taking too long. Please try again later.",
+          "The reset email is taking longer than expected. Please try again later.",
       });
       router.push({
         pathname: "/(auth)/emailverify",
@@ -76,24 +89,57 @@ export default function ForgotPassword() {
               Forgot Password
             </Text>
             <Text className="text-xl text-center text-wrap font-normal text-gray-500 px-14">
-              Enter your email or phone number and we&apos;ll send a code to
-              reset your password.
+              Choose where to receive your reset code.
             </Text>
           </View>
 
           <View className="flex gap-4 py-5 mb-3">
+            <View className="flex-row rounded-2xl bg-gray-100 p-1">
+              {(["email", "phone"] as const).map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  activeOpacity={0.8}
+                  className={`flex-1 rounded-xl py-3 items-center ${
+                    mode === option ? "bg-white" : ""
+                  }`}
+                  onPress={() => {
+                    setMode(option);
+                    setTarget("");
+                    setError("");
+                    setSubmitted(false);
+                  }}
+                  disabled={loading}
+                >
+                  <Text
+                    className={`font-semibold capitalize ${
+                      mode === option ? "text-blue-700" : "text-gray-500"
+                    }`}
+                  >
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <InputText
-              placeHolder="Email or Phone Number"
-              icon="call-outline"
-              keyboardType="email-address"
+              placeHolder={
+                mode === "email" ? "Email address" : "+233 241 234 567"
+              }
+              icon={mode === "email" ? "mail-outline" : "call-outline"}
+              keyboardType={mode === "email" ? "email-address" : "phone-pad"}
               onChangeText={(value) =>
-                value.includes("@")
+                mode === "email"
                   ? setTarget(value)
                   : setTarget(formatPhone(value))
               }
               value={target}
               editable={!loading}
-              error={submitted && !target.trim()}
+              error={
+                submitted &&
+                (!target.trim() ||
+                  (mode === "email"
+                    ? !isValidEmail(target)
+                    : !isValidPhone(target)))
+              }
             />
             {error ? (
               <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border border-red-200 px-3 py-3">
