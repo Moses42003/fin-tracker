@@ -4,6 +4,7 @@ import InputText from "@/components/input";
 import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
 import {
     formatPhone,
+    isValidEmail,
     isValidPhone,
     normalizePhone,
 } from "@/lib/authValidation";
@@ -23,7 +24,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [mode, setMode] = useState<"phone" | "email">("phone");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -35,7 +37,8 @@ export default function LoginScreen() {
     setNeedsVerification(false);
     setSubmitted(true);
     const missingFields = [
-      !phone.trim() && "phone number",
+      !identifier.trim() &&
+        `${mode} ${mode === "email" ? "address" : "number"}`,
       !password && "password",
     ].filter(Boolean);
     if (missingFields.length) {
@@ -43,8 +46,15 @@ export default function LoginScreen() {
       return;
     }
 
-    const identifier = normalizePhone(phone);
-    if (!isValidPhone(identifier)) {
+    const normalizedIdentifier =
+      mode === "email"
+        ? identifier.trim().toLowerCase()
+        : normalizePhone(identifier);
+    if (mode === "email" && !isValidEmail(normalizedIdentifier)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (mode === "phone" && !isValidPhone(normalizedIdentifier)) {
       setError("Enter a valid phone number.");
       return;
     }
@@ -52,7 +62,7 @@ export default function LoginScreen() {
     try {
       const data = await apiFetch(AUTH_ENDPOINTS.login, {
         method: "POST",
-        body: { username: identifier, password },
+        body: { username: normalizedIdentifier, password },
         form: true,
       });
       const token = data.token || data.access_token;
@@ -62,7 +72,11 @@ export default function LoginScreen() {
       await savePendingToken(token);
       router.push({
         pathname: "/(auth)/emailverify",
-        params: { phone: identifier, purpose: "login" },
+        params: {
+          email: normalizedIdentifier,
+          phone: normalizedIdentifier,
+          purpose: "login",
+        },
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to log in";
@@ -110,14 +124,46 @@ export default function LoginScreen() {
           </View>
 
           <View className="flex gap-4 py-5 mb-3">
+            <View className="flex-row rounded-2xl bg-gray-100 p-1">
+              {(["phone", "email"] as const).map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  activeOpacity={0.8}
+                  className={`flex-1 rounded-xl py-3 items-center ${mode === option ? "bg-white" : ""}`}
+                  onPress={() => {
+                    setMode(option);
+                    setIdentifier("");
+                    setError("");
+                    setSubmitted(false);
+                  }}
+                  disabled={loading}
+                >
+                  <Text
+                    className={`font-semibold capitalize ${mode === option ? "text-blue-700" : "text-gray-500"}`}
+                  >
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <InputText
-              placeHolder="Phone number"
-              icon="call-outline"
-              keyboardType="phone-pad"
-              onChangeText={(value) => setPhone(formatPhone(value))}
-              value={phone}
+              placeHolder={mode === "email" ? "Email address" : "Phone number"}
+              icon={mode === "email" ? "mail-outline" : "call-outline"}
+              keyboardType={mode === "email" ? "email-address" : "phone-pad"}
+              onChangeText={(value) =>
+                mode === "email"
+                  ? setIdentifier(value)
+                  : setIdentifier(formatPhone(value))
+              }
+              value={identifier}
               editable={!loading}
-              error={submitted && !phone.trim()}
+              error={
+                submitted &&
+                (!identifier.trim() ||
+                  (mode === "email"
+                    ? !isValidEmail(identifier)
+                    : !isValidPhone(identifier)))
+              }
             />
 
             <InputText
@@ -147,8 +193,8 @@ export default function LoginScreen() {
                   router.push({
                     pathname: "/(auth)/emailverify",
                     params: {
-                      email: identifierForVerification(phone),
-                      phone: identifierForVerification(phone),
+                      email: identifierForVerification(identifier, mode),
+                      phone: identifierForVerification(identifier, mode),
                       purpose: "signup",
                     },
                   })
@@ -218,6 +264,6 @@ export default function LoginScreen() {
   );
 }
 
-function identifierForVerification(value: string) {
-  return normalizePhone(value);
+function identifierForVerification(value: string, mode: "phone" | "email") {
+  return mode === "email" ? value.trim().toLowerCase() : normalizePhone(value);
 }

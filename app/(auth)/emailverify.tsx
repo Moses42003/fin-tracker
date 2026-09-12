@@ -8,7 +8,7 @@ import {
 } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -34,12 +34,23 @@ export default function EmailVerification() {
   }>();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
+  const [resendMessage, setResendMessage] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(60);
   const [loading, setLoading] = useState(false);
 
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const target = (purpose === "reset" ? email || phone : phone || email).trim();
   const isEmailTarget = target.includes("@");
   const targetLabel = isEmailTarget ? "email address" : "phone number";
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setResendSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendSeconds]);
 
   function handleChange(text: string, index: number) {
     setError("");
@@ -92,6 +103,28 @@ export default function EmailVerification() {
   function clearCode() {
     setOtp(["", "", "", "", "", ""]);
     setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  }
+
+  async function handleResend() {
+    if (resendSeconds > 0 || resending || loading) return;
+    setError("");
+    setResendMessage("");
+    setResending(true);
+    try {
+      await apiFetch(AUTH_ENDPOINTS.resendOtp, {
+        method: "POST",
+        body: { target },
+        timeoutMs: 90000,
+        timeoutMessage: "The new code is taking longer than expected.",
+      });
+      clearCode();
+      setResendSeconds(60);
+      setResendMessage(`A new code was requested for your ${targetLabel}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to resend code");
+    } finally {
+      setResending(false);
+    }
   }
 
   async function handleVerify() {
@@ -219,13 +252,30 @@ export default function EmailVerification() {
             <TouchableOpacity
               activeOpacity={0.7}
               className=""
-              onPress={() => router.back()}
+              onPress={handleResend}
+              disabled={loading || resending || resendSeconds > 0}
             >
-              <Text className="text-lg font-semibold text-blue-600">
-                {purpose === "login" ? "Try again" : "Back"}
+              <Text
+                className={`text-lg font-semibold ${
+                  resendSeconds > 0 || resending
+                    ? "text-gray-400"
+                    : "text-blue-600"
+                }`}
+              >
+                {resending
+                  ? "Requesting..."
+                  : resendSeconds > 0
+                    ? `Resend in ${resendSeconds}s`
+                    : "Resend code"}
               </Text>
             </TouchableOpacity>
           </View>
+
+          {resendMessage ? (
+            <Text className="text-green-700 font-semibold text-center mb-3">
+              {resendMessage}
+            </Text>
+          ) : null}
 
           {error ? (
             <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border border-red-200 px-3 py-3">
