@@ -1,50 +1,42 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AddScreen() {
-  const { type = "transaction" } = useLocalSearchParams<{ type?: string }>();
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
+export default function CategoryScreen() {
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
 
   function handleSave() {
-    if (!title.trim() || !amount.trim()) {
-      setError("Add a description and amount to continue.");
+    if (!name.trim()) {
+      setError("Add a category name to continue.");
       return;
     }
     router.replace("/(tabs)/transactions");
   }
 
   return (
-    <SafeAreaView className="flex-1 py-5 px-4 bg-white">
-      <BackText title={`New ${type}`} />
+    <SafeAreaView className="flex-1 px-4 py-5 bg-white">
+      <BackText title="New Category" />
       <ScrollView className="mt-8">
-        <Text className="text-3xl font-bold capitalize">Add {type}</Text>
+        <Text className="text-3xl font-bold">Create a category</Text>
         <Text className="text-gray-500 text-lg mt-2">
-          Add the details and keep your records current.
+          Keep your income and spending organized.
         </Text>
         <View className="mt-6">
           <InputText
-            placeHolder="Description"
-            value={title}
-            onChangeText={setTitle}
-          />
-          <InputText
-            placeHolder="Amount"
-            keyboardType="decimal-pad"
-            value={amount}
-            onChangeText={setAmount}
+            placeHolder="Category name"
+            value={name}
+            onChangeText={setName}
           />
           {error ? (
             <Text className="text-red-600 font-semibold">{error}</Text>
           ) : null}
           <CustomButton
-            name={`Save ${type}`}
+            name="Save category"
             color="white"
             bgColor="#2563eb"
             onPress={handleSave}

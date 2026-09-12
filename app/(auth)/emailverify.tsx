@@ -1,9 +1,9 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
+import { saveSession } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import React, { useRef, useState } from "react";
 import {
   Keyboard,
@@ -33,7 +33,7 @@ export default function EmailVerification() {
   const [loading, setLoading] = useState(false);
 
   const inputRefs = useRef<(TextInput | null)[]>([]);
-  const target = (email || phone).trim();
+  const target = (purpose === "reset" ? email || phone : phone || email).trim();
   const isEmailTarget = target.includes("@");
   const targetLabel = isEmailTarget ? "email address" : "phone number";
 
@@ -114,7 +114,7 @@ export default function EmailVerification() {
       });
       const token = data.token || data.access_token;
       if (token) {
-        await SecureStore.setItemAsync("auth_token", token);
+        await saveSession(token);
         router.replace("/(tabs)");
       } else {
         router.replace("/(auth)/login");

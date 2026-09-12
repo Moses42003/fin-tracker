@@ -1,15 +1,33 @@
 import CustomButton from "@/components/custombutton";
 import GreetingCard from "@/components/greetingcard";
 import SettingOption from "@/components/settingoption";
+import {
+    clearSession,
+    displayName,
+    getSessionUser,
+    SessionUser,
+} from "@/lib/session";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileTab() {
+  const [user, setUser] = useState<SessionUser | null>(null);
+
+  useEffect(() => {
+    getSessionUser().then(setUser);
+  }, []);
+
+  async function handleLogout() {
+    await clearSession();
+    router.replace("/(auth)/login");
+  }
+
   return (
     <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex flex-2 px-5 mb-4">
-        <GreetingCard name="CodeTech SP" profile />
+        <GreetingCard name={displayName(user)} profile />
       </View>
       <ScrollView className="flex flex-1 h-max bg-white rounded-t-3xl px-8 py-5">
         <SettingOption value="GH₵" icon="cash-outline" name="Currency" />
@@ -28,11 +46,7 @@ export default function ProfileTab() {
           name="About App"
         />
 
-        <CustomButton
-          name="Log Out"
-          color="red"
-          onPress={() => router.replace("/(auth)/login")}
-        />
+        <CustomButton name="Log Out" color="red" onPress={handleLogout} />
       </ScrollView>
 
       <StatusBar barStyle={"light-content"} />

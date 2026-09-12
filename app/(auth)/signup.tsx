@@ -103,11 +103,14 @@ export default function SignUpScreen() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to create account";
-      const recoverable = /already exists|duplicate|too long|timed out/i.test(
-        message,
-      );
+      const isDuplicate = /already exists|duplicate/i.test(message);
+      const recoverable = /too long|timed out/i.test(message);
       setCanContinueToVerification(recoverable);
-      setError(message);
+      setError(
+        isDuplicate
+          ? "This email is already registered, including a previous deleted account. The backend must restore or permanently remove it before you can reuse it."
+          : message,
+      );
       if (recoverable) {
         router.push({
           pathname: "/(auth)/emailverify",

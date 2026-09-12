@@ -2,10 +2,14 @@ import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
 import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
-import { formatPhone, normalizePhone } from "@/lib/authValidation";
+import {
+    formatPhone,
+    isValidPhone,
+    normalizePhone,
+} from "@/lib/authValidation";
+import { saveSession } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
     KeyboardAvoidingView,
@@ -31,7 +35,7 @@ export default function LoginScreen() {
     setNeedsVerification(false);
     setSubmitted(true);
     const missingFields = [
-      !phone.trim() && "email or phone number",
+      !phone.trim() && "phone number",
       !password && "password",
     ].filter(Boolean);
     if (missingFields.length) {
@@ -39,9 +43,11 @@ export default function LoginScreen() {
       return;
     }
 
-    const identifier = phone.includes("@")
-      ? phone.trim().toLowerCase()
-      : normalizePhone(phone);
+    const identifier = normalizePhone(phone);
+    if (!isValidPhone(identifier)) {
+      setError("Enter a valid phone number.");
+      return;
+    }
     setLoading(true);
     try {
       const data = await apiFetch(AUTH_ENDPOINTS.login, {
@@ -53,7 +59,7 @@ export default function LoginScreen() {
       if (!token) {
         throw new Error("Login succeeded but no access token was returned");
       }
-      await SecureStore.setItemAsync("auth_token", token);
+      await saveSession(token);
       router.replace("/(tabs)");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to log in";
@@ -102,14 +108,10 @@ export default function LoginScreen() {
 
           <View className="flex gap-4 py-5 mb-3">
             <InputText
-              placeHolder="Email or phone number"
+              placeHolder="Phone number"
               icon="call-outline"
-              keyboardType="email-address"
-              onChangeText={(value) =>
-                value.includes("@")
-                  ? setPhone(value)
-                  : setPhone(formatPhone(value))
-              }
+              keyboardType="phone-pad"
+              onChangeText={(value) => setPhone(formatPhone(value))}
               value={phone}
               editable={!loading}
               error={submitted && !phone.trim()}
@@ -214,7 +216,5 @@ export default function LoginScreen() {
 }
 
 function identifierForVerification(value: string) {
-  return value.includes("@")
-    ? value.trim().toLowerCase()
-    : normalizePhone(value);
+  return normalizePhone(value);
 }

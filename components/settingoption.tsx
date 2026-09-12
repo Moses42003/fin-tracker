@@ -23,6 +23,8 @@ export default function SettingOption({ last, value, icon, name }: Props) {
       style={{ borderBottomWidth: last ? 0 : 1 }}
     >
       <View className="flex flex-row items-center gap-4">
+        {/* Ionicons accepts the configured runtime names. */}
+        {/* @ts-ignore */}
         <Ionicons name={icon} color="gray" size={24} />
         <Text className="text-xl font-semibold">{name}</Text>
       </View>
