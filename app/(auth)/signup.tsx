@@ -20,6 +20,7 @@ import {
     isValidEmail,
     normalizePhone,
 } from "@/lib/authValidation";
+import { savePendingCredentials } from "@/lib/session";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
@@ -91,6 +92,7 @@ export default function SignUpScreen() {
         timeoutMessage:
           "Account creation or email delivery is taking longer than expected. Please try again.",
       });
+      await savePendingCredentials(normalizedPhone, password);
 
       router.push({
         pathname: "/(auth)/emailverify",

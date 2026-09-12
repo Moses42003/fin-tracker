@@ -1,8 +1,10 @@
 import CustomButton from "@/components/custombutton";
+import { getSessionToken } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     ImageBackground,
     StatusBar,
     Text,
@@ -12,6 +14,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SplahScreen() {
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    getSessionToken().then((token) => {
+      if (token) {
+        router.replace("/(tabs)");
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, []);
+
+  if (checkingSession) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-violet-950">
+        <ActivityIndicator size="large" color="white" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <ImageBackground
       source={require("../../assets/BG Asset/image_bg_one.png")}

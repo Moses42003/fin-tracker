@@ -7,7 +7,7 @@ import {
     isValidPhone,
     normalizePhone,
 } from "@/lib/authValidation";
-import { saveSession } from "@/lib/session";
+import { savePendingToken } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -59,8 +59,11 @@ export default function LoginScreen() {
       if (!token) {
         throw new Error("Login succeeded but no access token was returned");
       }
-      await saveSession(token);
-      router.replace("/(tabs)");
+      await savePendingToken(token);
+      router.push({
+        pathname: "/(auth)/emailverify",
+        params: { phone: identifier, purpose: "login" },
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to log in";
       if (

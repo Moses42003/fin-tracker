@@ -1,21 +1,20 @@
 import TransactionCard from "@/components/transcard";
-import { useEffect, useState } from "react";
+import { transactionData } from "@/lib/mockData";
+import { useState } from "react";
 import {
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TransactionTab() {
   const [currentTab, setCurrentTab] = useState("all");
-  const [showTrans, setShowTrans] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setShowTrans(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  const visibleTransactions = transactionData.filter(
+    (transaction) => currentTab === "all" || transaction.kind === currentTab,
+  );
   return (
     <SafeAreaView className="pt-5 px-5 bg-white flex-1">
       <View className="flex gap-4">
@@ -86,62 +85,24 @@ export default function TransactionTab() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {showTrans && currentTab === "all" ? (
-          <View>
-            <View>
-              <Text className="text-lg font-bold mb-5">May 15, 2016</Text>
-              <View className="flex p-2 gap-10">
-                <TransactionCard title="School Fees" amount={250} />
-                <TransactionCard title="Food & Meals" amount={45.5} />
-                <TransactionCard color="orange" title="Transport" amount={15} />
-              </View>
-            </View>
-
-            <View>
-              <Text className="text-lg font-bold mb-5">May 19, 2016</Text>
-              <View className="flex p-2 gap-10">
-                <TransactionCard income title="Freelance Work" amount={350.0} />
-                <TransactionCard
-                  color="orange"
-                  income
-                  title="Gift"
-                  amount={50}
-                />
-              </View>
-            </View>
-          </View>
-        ) : showTrans && currentTab === "income" ? (
-          <View>
-            <Text className="text-lg font-bold mb-5">May 19, 2016</Text>
-            <View className="flex p-2 gap-10">
-              <TransactionCard income title="Freelance Work" amount={350.0} />
-              <TransactionCard color="orange" income title="Gift" amount={50} />
-            </View>
-          </View>
-        ) : showTrans && currentTab === "expense" ? (
-          <View>
-            <Text className="text-lg font-bold mb-5">May 15, 2016</Text>
-            <View className="flex p-2 gap-10">
-              <TransactionCard title="School Fees" amount={250} />
-              <TransactionCard title="Food & Meals" amount={45.5} />
-              <TransactionCard color="orange" title="Transport" amount={15} />
-            </View>
+        {visibleTransactions.length ? (
+          <View className="gap-4">
+            {visibleTransactions.map((transaction) => (
+              <TransactionCard
+                key={transaction.id}
+                income={transaction.kind === "income"}
+                title={transaction.title}
+                amount={transaction.amount}
+              />
+            ))}
           </View>
         ) : (
-          <View className="flex-1">
-            <View className="w-28 h-5 rounded-2xl bg-gray-300 mb-5"></View>
-            <View className="gap-10 mb-4">
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-            </View>
-
-            <View className="w-28 h-5 rounded-2xl bg-gray-300 mb-5"></View>
-            <View className="gap-10 mb-4">
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-              <View className="w-full h-20 bg-gray-300 rounded-2xl"></View>
-            </View>
+          <View className="items-center justify-center py-24 px-8">
+            <Text className="text-5xl">₵</Text>
+            <Text className="text-2xl font-bold mt-4">Nothing here yet</Text>
+            <Text className="text-gray-500 text-center mt-2">
+              Your {currentTab} records will appear here once you add them.
+            </Text>
           </View>
         )}
       </ScrollView>

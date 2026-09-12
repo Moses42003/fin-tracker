@@ -1,7 +1,11 @@
 import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import { apiFetch, AUTH_ENDPOINTS } from "@/lib/api";
-import { saveSession } from "@/lib/session";
+import {
+  consumePendingCredentials,
+  consumePendingToken,
+  saveSession,
+} from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -112,9 +116,21 @@ export default function EmailVerification() {
         method: "POST",
         body: { target, code },
       });
-      const token = data.token || data.access_token;
+      let token =
+        data.token || data.access_token || (await consumePendingToken());
+      if (!token && purpose === "signup") {
+        const credentials = await consumePendingCredentials();
+        if (credentials) {
+          const loginData = await apiFetch(AUTH_ENDPOINTS.login, {
+            method: "POST",
+            body: credentials,
+            form: true,
+          });
+          token = loginData.token || loginData.access_token;
+        }
+      }
       if (token) {
-        await saveSession(token);
+        await saveSession(token, { phone: target });
         router.replace("/(tabs)");
       } else {
         router.replace("/(auth)/login");

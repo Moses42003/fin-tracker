@@ -24,7 +24,6 @@ export default function HomeTab() {
 
   const [renderChart, setRenderCart] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
-  const [showArrival, setShowArrival] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setRenderCart(true), 100);
@@ -33,24 +32,11 @@ export default function HomeTab() {
 
   useEffect(() => {
     getSessionUser().then(setUser);
-    const timer = setTimeout(() => setShowArrival(false), 4200);
-    return () => clearTimeout(timer);
   }, []);
 
   return (
     <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex px-5 mb-4">
-        {showArrival ? (
-          <View className="mb-4 rounded-3xl bg-blue-600 px-4 py-4">
-            <Text className="text-blue-100 font-semibold">You&apos;re in</Text>
-            <Text className="text-white text-2xl font-bold">
-              Welcome, {displayName(user)}
-            </Text>
-            <Text className="text-blue-100 mt-1">
-              Your money dashboard is ready.
-            </Text>
-          </View>
-        ) : null}
         <GreetingCard
           name={displayName(user)}
           iconOnPress={() => router.push("/notification")}

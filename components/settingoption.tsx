@@ -13,17 +13,24 @@ interface Props {
     | "color-fill-outline"
     | "wallet-outline"
     | "";
+  onPress?: () => void;
 }
 
-export default function SettingOption({ last, value, icon, name }: Props) {
+export default function SettingOption({
+  last,
+  value,
+  icon,
+  name,
+  onPress,
+}: Props) {
   return (
     <TouchableOpacity
       className="flex flex-row items-center justify-between border-gray-300 py-5"
       activeOpacity={0.7}
+      onPress={onPress}
       style={{ borderBottomWidth: last ? 0 : 1 }}
     >
       <View className="flex flex-row items-center gap-4">
-        {/* Ionicons accepts the configured runtime names. */}
         {/* @ts-ignore */}
         <Ionicons name={icon} color="gray" size={24} />
         <Text className="text-xl font-semibold">{name}</Text>

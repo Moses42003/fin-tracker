@@ -3,6 +3,8 @@ import * as SecureStore from "expo-secure-store";
 
 export const SESSION_TOKEN_KEY = "auth_token";
 export const SESSION_USER_KEY = "auth_user";
+export const PENDING_TOKEN_KEY = "pending_auth_token";
+export const PENDING_CREDENTIALS_KEY = "pending_auth_credentials";
 
 export interface SessionUser {
   id?: string;
@@ -17,7 +19,10 @@ export async function saveSession(token: string, fallbackUser?: SessionUser) {
   await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
   let user = fallbackUser;
   try {
-    user = await apiFetch("/auth/me", { method: "POST", token });
+    user = await apiFetch("/auth/me", {
+      method: "POST",
+      body: { access_token: token },
+    });
   } catch {
     user = fallbackUser;
   }
@@ -25,6 +30,37 @@ export async function saveSession(token: string, fallbackUser?: SessionUser) {
     await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(user));
   }
   return user;
+}
+
+export async function savePendingToken(token: string) {
+  await SecureStore.setItemAsync(PENDING_TOKEN_KEY, token);
+}
+
+export async function consumePendingToken() {
+  const token = await SecureStore.getItemAsync(PENDING_TOKEN_KEY);
+  if (token) await SecureStore.deleteItemAsync(PENDING_TOKEN_KEY);
+  return token;
+}
+
+export async function savePendingCredentials(
+  username: string,
+  password: string,
+) {
+  await SecureStore.setItemAsync(
+    PENDING_CREDENTIALS_KEY,
+    JSON.stringify({ username, password }),
+  );
+}
+
+export async function consumePendingCredentials() {
+  const raw = await SecureStore.getItemAsync(PENDING_CREDENTIALS_KEY);
+  if (raw) await SecureStore.deleteItemAsync(PENDING_CREDENTIALS_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as { username: string; password: string };
+  } catch {
+    return null;
+  }
 }
 
 export async function getSessionUser() {
@@ -44,6 +80,8 @@ export async function getSessionToken() {
 export async function clearSession() {
   await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
   await SecureStore.deleteItemAsync(SESSION_USER_KEY);
+  await SecureStore.deleteItemAsync(PENDING_TOKEN_KEY);
+  await SecureStore.deleteItemAsync(PENDING_CREDENTIALS_KEY);
 }
 
 export function displayName(user?: SessionUser | null) {
