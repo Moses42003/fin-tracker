@@ -37,6 +37,7 @@ export default function TargetsTab() {
             {targetData.map((target) => (
               <TargetCard
                 key={target.id}
+                id={target.id}
                 name={target.name}
                 amountDone={target.saved}
                 totalAmount={target.total}

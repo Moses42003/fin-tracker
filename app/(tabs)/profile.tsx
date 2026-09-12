@@ -30,6 +30,11 @@ export default function ProfileTab() {
         <GreetingCard name={displayName(user)} profile />
       </View>
       <ScrollView className="flex flex-1 h-max bg-white rounded-t-3xl px-8 py-5">
+        <SettingOption
+          name="Account information"
+          icon="person-outline"
+          onPress={() => router.push("/settings/account")}
+        />
         <SettingOption value="GH₵" icon="cash-outline" name="Currency" />
 
         <SettingOption

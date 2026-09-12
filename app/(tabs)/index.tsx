@@ -1,6 +1,7 @@
 import GreetingCard from "@/components/greetingcard";
 import TotalAmountCard from "@/components/totalamountcard";
 import TransactionCard from "@/components/transcard";
+import { getFinancialSummary, transactionData } from "@/lib/mockData";
 import { displayName, getSessionUser, SessionUser } from "@/lib/session";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,11 +17,16 @@ import { PieChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeTab() {
+  const summary = getFinancialSummary(transactionData);
   const donutData = [
-    { text: "Income", value: 50, color: "green" },
-    { text: "Expense", value: 30, color: "red" },
-    { text: "Savings", value: 20, color: "orange" },
-  ];
+    { text: "Income", value: summary.incomeShare, color: "#16a34a" },
+    { text: "Expense", value: summary.expenseShare, color: "#dc2626" },
+    {
+      text: "Savings",
+      value: Math.max(100 - summary.incomeShare - summary.expenseShare, 0),
+      color: "#f59e0b",
+    },
+  ].filter((item) => item.value > 0);
 
   const [renderChart, setRenderCart] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -80,7 +86,9 @@ export default function HomeTab() {
                   backgroundColor="white"
                   centerLabelComponent={() => (
                     <View className="items-center justify-center">
-                      <Text className="font-bold text-3xl">72%</Text>
+                      <Text className="font-bold text-3xl">
+                        {summary.incomeShare}%
+                      </Text>
                     </View>
                   )}
                 />
@@ -123,11 +131,17 @@ export default function HomeTab() {
             </TouchableOpacity>
           </View>
 
-          <View className="flex gap-9">
-            <TransactionCard title="School Fees" />
-            <TransactionCard title="Food & Meals" />
-            <TransactionCard income title="Freelance Work" />
-            <TransactionCard income title="Gift" color="orange" />
+          <View className="gap-3">
+            {transactionData.slice(0, 4).map((transaction) => (
+              <TransactionCard
+                key={transaction.id}
+                title={transaction.title}
+                amount={transaction.amount}
+                income={transaction.kind === "income"}
+                category={transaction.category}
+                date={transaction.date}
+              />
+            ))}
           </View>
         </View>
 

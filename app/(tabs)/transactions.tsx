@@ -1,5 +1,5 @@
 import TransactionCard from "@/components/transcard";
-import { transactionData } from "@/lib/mockData";
+import { getFinancialSummary, transactionData } from "@/lib/mockData";
 import { useState } from "react";
 import {
     ScrollView,
@@ -15,6 +15,7 @@ export default function TransactionTab() {
   const visibleTransactions = transactionData.filter(
     (transaction) => currentTab === "all" || transaction.kind === currentTab,
   );
+  const summary = getFinancialSummary(transactionData);
   return (
     <SafeAreaView className="pt-5 px-5 bg-white flex-1">
       <View className="flex gap-4">
@@ -22,6 +23,24 @@ export default function TransactionTab() {
           <Text className="text-3xl font-bold">Records</Text>
 
           <View className="bg-slate-200 rounded-xl w-24 h-10"></View>
+        </View>
+        <View className="flex-row gap-3 mb-5">
+          <View className="flex-1 rounded-2xl bg-slate-900 px-4 py-4">
+            <Text className="text-slate-400 text-xs font-semibold">
+              BALANCE
+            </Text>
+            <Text className="text-white text-lg font-bold mt-1">
+              GH₵ {summary.balance.toFixed(2)}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-2xl bg-emerald-50 px-4 py-4">
+            <Text className="text-emerald-700 text-xs font-semibold">
+              VISIBLE
+            </Text>
+            <Text className="text-emerald-900 text-lg font-bold mt-1">
+              {visibleTransactions.length} records
+            </Text>
+          </View>
         </View>
 
         <View className="flex flex-row items-center gap-3 mb-3">
@@ -93,6 +112,8 @@ export default function TransactionTab() {
                 income={transaction.kind === "income"}
                 title={transaction.title}
                 amount={transaction.amount}
+                category={transaction.category}
+                date={transaction.date}
               />
             ))}
           </View>

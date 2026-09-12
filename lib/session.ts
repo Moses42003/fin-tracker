@@ -73,6 +73,13 @@ export async function getSessionUser() {
   }
 }
 
+export async function updateSessionUser(updates: Partial<SessionUser>) {
+  const current = (await getSessionUser()) || {};
+  const next = { ...current, ...updates };
+  await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(next));
+  return next;
+}
+
 export async function getSessionToken() {
   return SecureStore.getItemAsync(SESSION_TOKEN_KEY);
 }

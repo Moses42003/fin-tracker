@@ -7,6 +7,7 @@ interface Props {
   income?: boolean;
   amount?: number;
   color?: "green" | "red" | "orange";
+  category?: string;
 }
 
 export default function TransactionCard({
@@ -15,66 +16,35 @@ export default function TransactionCard({
   color,
   title,
   date,
+  category,
 }: Props) {
-  let currentColor =
-    color === "green" && income
-      ? "#86efac"
-      : color === "orange"
-        ? "#ffedd5"
-        : color === "red"
-          ? "#fee2e2"
-          : "#fee2e2";
+  const accent = income ? "#16a34a" : "#dc2626";
+  const surface = income ? "#f0fdf4" : "#fff7ed";
+  const icon = income ? "arrow-down-left" : "arrow-up-right";
   return (
-    <View className="flex flex-row items-center justify-between">
+    <View className="flex-row items-center justify-between rounded-3xl border border-gray-200 bg-white px-4 py-4">
       <View className="flex flex-row gap-3 items-center">
-        {/* Icon if expense or income */}
-        {income ? (
-          <View
-            className="p-4 rounded-2xl flex items-center justify-center"
-            style={{
-              backgroundColor: income && !color ? "#86efac" : currentColor,
-            }}
-          >
-            <Ionicons
-              name="wallet"
-              color={income && !color ? "green" : color}
-              size={35}
-            />
-          </View>
-        ) : (
-          <View
-            className="p-4 rounded-2xl flex items-center justify-center"
-            style={{
-              backgroundColor: !income && !color ? "#fee2e2" : currentColor,
-            }}
-          >
-            <Ionicons
-              name="wallet"
-              color={
-                !income && !color ? "red" : color === "green" ? "red" : color
-              }
-              size={35}
-            />
-          </View>
-        )}
+        <View
+          className="w-12 h-12 rounded-2xl items-center justify-center"
+          style={{ backgroundColor: surface }}
+        >
+          {/* @ts-ignore Ionicons accepts these runtime names. */}
+          <Ionicons name={icon} color={accent} size={25} />
+        </View>
 
-        <View className="flex gap-2">
-          <Text className="font-bold text-lg">{title ? title : "title"}</Text>
-          <Text>{date ? date : "May 15, 2016"}</Text>
+        <View className="gap-1">
+          <Text className="font-bold text-base">
+            {title || "Untitled record"}
+          </Text>
+          <Text className="text-gray-500 text-sm">
+            {category || "General"} · {date || "Today"}
+          </Text>
         </View>
       </View>
 
-      <View>
-        {income === true ? (
-          <Text className="font-bold text-xl text-green-500">
-            + GH₵ {amount ? amount : "0.00"}
-          </Text>
-        ) : (
-          <Text className="font-bold text-xl text-red-500">
-            - GH₵ {amount ? amount : "0.00"}
-          </Text>
-        )}
-      </View>
+      <Text className="font-bold text-base" style={{ color: accent }}>
+        {income ? "+" : "-"} GH₵ {(amount || 0).toFixed(2)}
+      </Text>
     </View>
   );
 }

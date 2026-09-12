@@ -6,6 +6,7 @@ interface Props {
   last?: boolean;
   value?: string;
   icon?:
+    | "person-outline"
     | "notifications-outline"
     | "cash-outline"
     | "information-circle-outline"

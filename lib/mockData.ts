@@ -69,3 +69,32 @@ export const targetData: TargetRecord[] = [
     date: "18 Dec",
   },
 ];
+
+export function getFinancialSummary(records: TransactionRecord[]) {
+  const income = records
+    .filter((record) => record.kind === "income")
+    .reduce((total, record) => total + record.amount, 0);
+  const expenses = records
+    .filter((record) => record.kind === "expense")
+    .reduce((total, record) => total + record.amount, 0);
+  const savings = Math.max(income - expenses, 0);
+  const total = income + expenses;
+
+  return {
+    income,
+    expenses,
+    savings,
+    balance: income - expenses,
+    incomeShare: total ? Math.round((income / total) * 100) : 0,
+    expenseShare: total ? Math.round((expenses / total) * 100) : 0,
+  };
+}
+
+export function getCategoryTotals(records: TransactionRecord[]) {
+  return records
+    .filter((record) => record.kind === "expense")
+    .reduce<Record<string, number>>((totals, record) => {
+      totals[record.category] = (totals[record.category] || 0) + record.amount;
+      return totals;
+    }, {});
+}
