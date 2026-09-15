@@ -22,7 +22,7 @@ export default function CustomButton({
 }: Props) {
   return (
     <TouchableOpacity
-      className="flex py-5 rounded-3xl my-3 w-full flex-row items-center gap-2 justify-center"
+      className="w-full py-5 rounded-3xl my-3 flex-row items-center gap-2 justify-center"
       activeOpacity={0.7}
       onPress={onPress}
       disabled={disabled}

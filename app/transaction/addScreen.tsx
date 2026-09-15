@@ -17,7 +17,9 @@ export default function AddScreen() {
       setError("Add a description and amount to continue.");
       return;
     }
-    router.replace("/(tabs)/transactions");
+    router.back();
+
+    router.navigate("/(tabs)/transactions");
   }
 
   return (

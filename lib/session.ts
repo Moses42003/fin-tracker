@@ -80,6 +80,51 @@ export async function updateSessionUser(updates: Partial<SessionUser>) {
   return next;
 }
 
+export async function updateUserOnBackend(updates: Partial<SessionUser>) {
+  const current = await getSessionUser();
+  const token = await getSessionToken();
+  if (!current?.id || !token) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+  if (!current.email) {
+    throw new Error("Your account email is missing. Please log in again.");
+  }
+
+  const updated = await apiFetch(`/api/goal/users/${current.id}`, {
+    method: "PUT",
+    token,
+    body: {
+      email: current.email,
+      first_name: updates.first_name ?? current.first_name ?? null,
+      last_name: updates.last_name ?? current.last_name ?? null,
+      phone: updates.phone ?? current.phone ?? null,
+      username: updates.username ?? current.username ?? null,
+    },
+  });
+
+  await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(updated));
+  return updated as SessionUser;
+}
+
+export async function deleteUserOnBackend() {
+  const current = await getSessionUser();
+  const token = await getSessionToken();
+  if (!current?.id || !token) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  await apiFetch(`/api/goal/users/${current.id}`, {
+    method: "DELETE",
+    token,
+    body: {
+      soft_delete: false,
+    },
+  });
+
+  await clearSession();
+  return;
+}
+
 export async function getSessionToken() {
   return SecureStore.getItemAsync(SESSION_TOKEN_KEY);
 }

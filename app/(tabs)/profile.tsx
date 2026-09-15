@@ -2,10 +2,10 @@ import CustomButton from "@/components/custombutton";
 import GreetingCard from "@/components/greetingcard";
 import SettingOption from "@/components/settingoption";
 import {
-    clearSession,
-    displayName,
-    getSessionUser,
-    SessionUser,
+  clearSession,
+  displayName,
+  getSessionUser,
+  SessionUser,
 } from "@/lib/session";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -33,7 +33,7 @@ export default function ProfileTab() {
         <SettingOption
           name="Account information"
           icon="person-outline"
-          onPress={() => router.push("/settings/account")}
+          onPress={() => router.push("/settings/accountinfo")}
         />
         <SettingOption value="GH₵" icon="cash-outline" name="Currency" />
 
@@ -46,15 +46,10 @@ export default function ProfileTab() {
         <SettingOption
           icon="notifications-outline"
           name="Notifications"
-          onPress={() => router.push("/settings/notifications")}
+          onPress={() => router.push("/notification")}
         />
 
-        <SettingOption
-          value="System"
-          name="Theme"
-          icon="color-fill-outline"
-          onPress={() => router.push("/settings/theme")}
-        />
+        <SettingOption value="System" name="Theme" icon="color-fill-outline" />
 
         <SettingOption
           icon="cloud-outline"
