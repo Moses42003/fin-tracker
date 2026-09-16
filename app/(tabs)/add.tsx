@@ -9,13 +9,13 @@ export default function AddTab() {
       title: "Income",
       detail: "Add money coming in",
       icon: "trending-up",
-      route: "/transaction/addScreen?type=income",
+      route: "/transaction/add-income",
     },
     {
       title: "Expense",
       detail: "Record money going out",
       icon: "trending-down",
-      route: "/transaction/addScreen?type=expense",
+      route: "/transaction/add-expense",
     },
     {
       title: "Target",

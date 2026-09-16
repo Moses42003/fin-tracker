@@ -1,12 +1,21 @@
 import GreetingCard from "@/components/greetingcard";
 import TotalAmountCard from "@/components/totalamountcard";
 import TransactionCard from "@/components/transcard";
-import { getFinancialSummary, transactionData } from "@/lib/mockData";
+import {
+    DashboardSummary,
+    getDashboardSummary,
+    getDashboardOverview,
+    DashboardOverview,
+} from "@/lib/finance";
+import { shortDate, toNumber } from "@/lib/format";
 import { displayName, getSessionUser, SessionUser } from "@/lib/session";
+import { useAsyncData } from "@/lib/useAsyncData";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    RefreshControl,
     ScrollView,
     StatusBar,
     Text,
@@ -17,19 +26,42 @@ import { PieChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeTab() {
-  const summary = getFinancialSummary(transactionData);
+  const summaryLoader = useCallback(() => getDashboardSummary(), []);
+  const overviewLoader = useCallback(() => getDashboardOverview(), []);
+  const {
+    data: summary,
+    loading,
+    error,
+    refreshing,
+    refresh,
+  } = useAsyncData<DashboardSummary>(summaryLoader);
+  const { data: overview, reload: reloadOverview } =
+    useAsyncData<DashboardOverview>(overviewLoader);
+
+  const recent = (summary?.recent_transactions ?? []).slice(0, 4);
+  const totalIncome = toNumber(summary?.total_income);
+  const totalExpenses = toNumber(summary?.total_expenses);
+  const total = totalIncome + totalExpenses;
+  const incomeShare = total ? Math.round((totalIncome / total) * 100) : 0;
+  const expenseShare = total ? Math.round((totalExpenses / total) * 100) : 0;
+
   const donutData = [
-    { text: "Income", value: summary.incomeShare, color: "#16a34a" },
-    { text: "Expense", value: summary.expenseShare, color: "#dc2626" },
+    { text: "Income", value: incomeShare, color: "#16a34a" },
+    { text: "Expense", value: expenseShare, color: "#dc2626" },
     {
       text: "Savings",
-      value: Math.max(100 - summary.incomeShare - summary.expenseShare, 0),
+      value: Math.max(100 - incomeShare - expenseShare, 0),
       color: "#f59e0b",
     },
   ].filter((item) => item.value > 0);
 
   const [renderChart, setRenderCart] = useState(false);
   const [user, setUser] = useState<SessionUser | null>(null);
+
+  function handleRefresh() {
+    refresh();
+    reloadOverview();
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setRenderCart(true), 100);
@@ -47,11 +79,18 @@ export default function HomeTab() {
           name={displayName(user)}
           iconOnPress={() => router.push("/notification")}
         />
-        <TotalAmountCard />
+        <TotalAmountCard
+          balance={overview?.balance ?? summary?.total_balance}
+          income={overview?.income ?? summary?.total_income}
+          expenses={overview?.expenses ?? summary?.total_expenses}
+        />
       </View>
       <ScrollView
         className="flex flex-1 h-max bg-white rounded-t-3xl px-3 py-5"
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
         {/* Analytics Card View */}
         <View className="px-3 mb-4">
@@ -86,9 +125,7 @@ export default function HomeTab() {
                   backgroundColor="white"
                   centerLabelComponent={() => (
                     <View className="items-center justify-center">
-                      <Text className="font-bold text-3xl">
-                        {summary.incomeShare}%
-                      </Text>
+                      <Text className="font-bold text-3xl">{incomeShare}%</Text>
                     </View>
                   )}
                 />
@@ -131,18 +168,53 @@ export default function HomeTab() {
             </TouchableOpacity>
           </View>
 
-          <View className="gap-3">
-            {transactionData.slice(0, 4).map((transaction) => (
-              <TransactionCard
-                key={transaction.id}
-                title={transaction.title}
-                amount={transaction.amount}
-                income={transaction.kind === "income"}
-                category={transaction.category}
-                date={transaction.date}
+          {loading ? (
+            <View className="items-center justify-center py-10">
+              <ActivityIndicator size="small" color="#4c1d95" />
+              <Text className="text-gray-500 mt-3">Loading your records…</Text>
+            </View>
+          ) : error ? (
+            <View className="items-center justify-center py-10 px-6">
+              <Ionicons
+                name="cloud-offline-outline"
+                size={40}
+                color="#dc2626"
               />
-            ))}
-          </View>
+              <Text className="text-lg font-bold mt-3">Could not load</Text>
+              <Text className="text-gray-500 text-center mt-1">{error}</Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleRefresh}
+                className="mt-3 bg-slate-900 rounded-2xl px-5 py-2"
+              >
+                <Text className="text-white font-semibold">Try again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : recent.length ? (
+            <View className="gap-3">
+              {recent.map((transaction) => (
+                <TransactionCard
+                  key={transaction.id}
+                  title={
+                    transaction.description ||
+                    transaction.category ||
+                    "Untitled record"
+                  }
+                  amount={Number(transaction.amount)}
+                  income={transaction.type === "income"}
+                  category={transaction.category || undefined}
+                  date={shortDate(transaction.date)}
+                />
+              ))}
+            </View>
+          ) : (
+            <View className="items-center justify-center py-10">
+              <Text className="text-4xl">₵</Text>
+              <Text className="text-gray-500 mt-3 text-center">
+                Add income or an expense to see it here.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View className="flex-1 h-10"></View>
