@@ -12,6 +12,7 @@ interface Props {
   editable?: boolean;
   error?: boolean;
   onBlur?: () => void;
+  showPassword?: boolean;
 }
 
 export default function InputText({
@@ -24,6 +25,7 @@ export default function InputText({
   editable = true,
   error = false,
   onBlur,
+  showPassword = false,
 }: Props) {
   const inputRef = useRef(null);
   return (
@@ -44,7 +46,7 @@ export default function InputText({
           onPress={() => inputRef.current?.focus()}
           placeholder={placeHolder || "PlaceHolder"}
           placeholderTextColor="gray"
-          secureTextEntry={secure}
+          secureTextEntry={secure ? !showPassword : false}
           editable={editable}
           onBlur={onBlur}
           onChangeText={onChangeText}

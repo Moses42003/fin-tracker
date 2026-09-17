@@ -16,8 +16,11 @@ import {
   StatusBar,
   Text,
   View,
+  Image,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 
 export default function AccountInfo() {
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +31,7 @@ export default function AccountInfo() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -37,6 +41,8 @@ export default function AccountInfo() {
   const [success, setSuccess] = useState("");
   const [passwordSent, setPasswordSent] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setUser: setSessionUser } = useSession();
 
   async function handleSendPasswordCode() {
@@ -80,9 +86,22 @@ export default function AccountInfo() {
     }
   }
 
+  async function handleChooseImage() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setProfileImage(uri);
+    }
+  }
+
   async function handleSaveChanges() {
     setSaveError("");
-    setSuccess("");
 
     if (!email.trim() || !isValidEmail(email)) {
       setSaveError("Enter a valid email address.");
@@ -146,28 +165,51 @@ export default function AccountInfo() {
               View, change and delete your account info here
             </Text>
           </View>
-          <View className="p-2 rounded-2xl border-2 border-gray-300 bg-white">
-            <View className="flex-1 justify-center items-center my-3">
-              <View className="w-36 h-36 rounded-full bg-blue-800"></View>
-            </View>
 
-            <View className="flex-1">
-              <View className="flex-row gap-2 items-center">
-                <InputText
-                  placeHolder="First Name"
-                  icon="person-outline"
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  editable={!saveLoading}
-                />
-                <InputText
-                  placeHolder="Last Name"
-                  icon="person-outline"
-                  value={lastName}
-                  onChangeText={setLastName}
-                  editable={!saveLoading}
-                />
+          <View className="p-2 rounded-2xl border-2 border-gray-300 bg-white">
+            <TouchableWithoutFeedback onPress={handleChooseImage}>
+              <View className="flex-1 justify-center items-center my-3">
+                {profileImage ? (
+                  <Image
+                    source={{ uri: profileImage }}
+                    className="w-36 h-36 rounded-full object-cover"
+                  />
+                ) : (
+                  <View className="w-36 h-36 rounded-full bg-blue-800">
+                    <Ionicons
+                      name="person-outline"
+                      size={28}
+                      color="white"
+                    />
+                  </View>
+                )}
+                <View className="absolute top-2 right-2">
+                  <Ionicons
+                    name="add-outline"
+                    size={20}
+                    color="white"
+                  />
+                </View>
               </View>
+            </TouchableWithoutFeedback>
+          </View>
+
+          <View className="flex-1">
+            <View className="flex-row gap-2 items-center">
+              <InputText
+                placeHolder="First Name"
+                icon="person-outline"
+                value={firstName}
+                onChangeText={setFirstName}
+                editable={!saveLoading}
+              />
+              <InputText
+                placeHolder="Last Name"
+                icon="person-outline"
+                value={lastName}
+                onChangeText={setLastName}
+                editable={!saveLoading}
+              />
             </View>
           </View>
 
@@ -210,15 +252,18 @@ export default function AccountInfo() {
             <InputText
               placeHolder="New Password"
               icon="lock-closed-outline"
-              secure
+              secure={showNewPassword ? false : true}
               value={newPassword}
               onChangeText={setNewPassword}
               editable={!passwordLoading}
             />
+            <Text className="text-gray-500 text-sm capitalize" onPress={() => setShowNewPassword(true)}>
+              {showNewPassword ? "Hide" : "Show"} password
+            </Text>
             <InputText
               placeHolder="Confirm Password"
               icon="lock-closed-outline"
-              secure
+              secure={showConfirmPassword ? false : true}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               editable={!passwordLoading}
@@ -226,6 +271,9 @@ export default function AccountInfo() {
                 confirmPassword && newPassword !== confirmPassword,
               )}
             />
+            <Text className="text-gray-500 text-sm capitalize" onPress={() => setShowConfirmPassword(true)}>
+              {showConfirmPassword ? "Hide" : "Show"} password
+            </Text>
 
             <Text className="text-gray-500 px-1">
               For your security, we email you a 6-digit code before your

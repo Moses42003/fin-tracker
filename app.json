@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "FinTracker",
-    "slug": "FinTracker",
+    "name": "Goal Flow",
+    "slug": "goal-flow",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

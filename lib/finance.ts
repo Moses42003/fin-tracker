@@ -51,6 +51,7 @@ export interface UserUpdateInput {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  profileImage?: string;
 }
 
 /**
@@ -143,6 +144,7 @@ export async function updateUserAccount(input: UserUpdateInput) {
   if (input.firstName !== undefined) body.first_name = input.firstName.trim();
   if (input.lastName !== undefined) body.last_name = input.lastName.trim();
   if (input.phone !== undefined) body.phone = input.phone.trim();
+  if (input.profileImage !== undefined) body.profile_image = input.profileImage;
 
   return apiFetch(API_ENDPOINTS.user(userId), {
     method: "PUT",
