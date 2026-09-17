@@ -35,19 +35,23 @@ export default function CustomMadal({
       transparent
       animationType="fade"
     >
-      <View className="bg-gray-500/25 flex-1 items-center justify-center">
-        <View className="p-3 bg-white rounded-2xl max-w-96 flex gap-2">
+      <View className="bg-gray-900/50 flex-1 items-center justify-center px-6">
+        <View className="w-full rounded-2xl bg-white p-5 gap-2">
           <Text className="text-2xl font-bold text-center">{heading}</Text>
 
-          <Text className="text-lg font-semibold text-gray-500">
-            {description}
-          </Text>
+          {description ? (
+            <Text className="text-lg font-semibold text-gray-500 text-center">
+              {description}
+            </Text>
+          ) : null}
 
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-3 mt-2">
             <CustomButton
               name={cancelLabel}
               color="white"
-              bgColor="gray"
+              bgColor="#64748b"
+              width="auto"
+              className="flex-1"
               onPress={onClose}
               disabled={loading}
             />
@@ -55,6 +59,8 @@ export default function CustomMadal({
               name={confirmLabel}
               color="white"
               bgColor={confirmColor}
+              width="auto"
+              className="flex-1"
               onPress={onComfirm}
               loading={loading}
               disabled={loading}

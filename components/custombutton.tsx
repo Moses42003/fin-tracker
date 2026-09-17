@@ -9,6 +9,14 @@ interface Props {
   icon?: "arrow-forward" | string;
   disabled?: boolean;
   loading?: boolean;
+  /**
+   * How the button sizes itself. "full" fills its row (default). "auto" lets it
+   * share a row with other buttons rather than forcing 100% width, which is
+   * what makes two side-by-side buttons overlap.
+   */
+  width?: "full" | "auto";
+  /** Extra classes, e.g. "flex-1" when placed in a row. */
+  className?: string;
 }
 
 export default function CustomButton({
@@ -19,10 +27,14 @@ export default function CustomButton({
   icon,
   disabled,
   loading = false,
+  width = "full",
+  className = "",
 }: Props) {
   return (
     <TouchableOpacity
-      className="w-full py-5 rounded-3xl my-3 flex-row items-center gap-2 justify-center"
+      className={`${
+        width === "full" ? "w-full" : ""
+      } py-5 rounded-3xl my-3 flex-row items-center gap-2 justify-center ${className}`}
       activeOpacity={0.7}
       onPress={onPress}
       disabled={disabled}

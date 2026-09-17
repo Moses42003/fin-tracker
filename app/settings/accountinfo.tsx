@@ -313,6 +313,7 @@ export default function AccountInfo() {
         heading="Delete your account?"
         description="This permanently removes your account and all of your records. This cannot be undone."
         confirmLabel="Delete account"
+        confirmColor="#dc2626"
         cancelLabel="Keep account"
         visible={showModal}
         onClose={() => setShowModal(false)}
