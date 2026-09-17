@@ -8,7 +8,7 @@ import {
     DashboardOverview,
 } from "@/lib/finance";
 import { shortDate, toNumber } from "@/lib/format";
-import { displayName, getSessionUser, SessionUser } from "@/lib/session";
+import { useSession } from "@/lib/sessionContext";
 import { useAsyncData } from "@/lib/useAsyncData";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -26,6 +26,7 @@ import { PieChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeTab() {
+  const { name, dataVersion } = useSession();
   const summaryLoader = useCallback(() => getDashboardSummary(), []);
   const overviewLoader = useCallback(() => getDashboardOverview(), []);
   const {
@@ -34,9 +35,10 @@ export default function HomeTab() {
     error,
     refreshing,
     refresh,
-  } = useAsyncData<DashboardSummary>(summaryLoader);
-  const { data: overview, reload: reloadOverview } =
-    useAsyncData<DashboardOverview>(overviewLoader);
+  } = useAsyncData<DashboardSummary>(summaryLoader, dataVersion);
+  const { data: overview, reload: reloadOverview } = useAsyncData<
+    DashboardOverview
+  >(overviewLoader, dataVersion);
 
   const recent = (summary?.recent_transactions ?? []).slice(0, 4);
   const totalIncome = toNumber(summary?.total_income);
@@ -56,7 +58,6 @@ export default function HomeTab() {
   ].filter((item) => item.value > 0);
 
   const [renderChart, setRenderCart] = useState(false);
-  const [user, setUser] = useState<SessionUser | null>(null);
 
   function handleRefresh() {
     refresh();
@@ -68,15 +69,13 @@ export default function HomeTab() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    getSessionUser().then(setUser);
-  }, []);
+
 
   return (
     <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex px-5 mb-4">
         <GreetingCard
-          name={displayName(user)}
+          name={name}
           iconOnPress={() => router.push("/notification")}
         />
         <TotalAmountCard

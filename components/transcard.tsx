@@ -10,6 +10,33 @@ interface Props {
   category?: string;
 }
 
+/**
+ * Category-aware icons. Only names that exist in this Ionicons set are used —
+ * the previous "arrow-down-left"/"arrow-up-right" names rendered as blanks.
+ */
+const CATEGORY_ICONS: Record<string, string> = {
+  food: "fast-food-outline",
+  transport: "bus-outline",
+  education: "school-outline",
+  rent: "home-outline",
+  utilities: "flash-outline",
+  health: "medkit-outline",
+  shopping: "cart-outline",
+  entertainment: "game-controller-outline",
+  savings: "wallet-outline",
+  work: "briefcase-outline",
+  gift: "gift-outline",
+  other: "pricetag-outline",
+};
+
+function iconFor(category?: string, income?: boolean) {
+  const key = category?.trim().toLowerCase() || "";
+  return (
+    CATEGORY_ICONS[key] ||
+    (income ? "arrow-down-circle" : "arrow-up-circle")
+  );
+}
+
 export default function TransactionCard({
   income,
   amount,
@@ -20,7 +47,7 @@ export default function TransactionCard({
 }: Props) {
   const accent = income ? "#16a34a" : "#dc2626";
   const surface = income ? "#f0fdf4" : "#fff7ed";
-  const icon = income ? "arrow-down-left" : "arrow-up-right";
+  const icon = iconFor(category, income);
   return (
     <View className="flex-row items-center justify-between rounded-3xl border border-gray-200 bg-white px-4 py-4">
       <View className="flex flex-row gap-3 items-center">

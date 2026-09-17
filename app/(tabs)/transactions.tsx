@@ -1,6 +1,7 @@
 import TransactionCard from "@/components/transcard";
 import { currency, shortDate } from "@/lib/format";
 import { listTransactions, TransactionRecord } from "@/lib/finance";
+import { useSession } from "@/lib/sessionContext";
 import { useAsyncData } from "@/lib/useAsyncData";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useState } from "react";
@@ -17,9 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TransactionTab() {
   const [currentTab, setCurrentTab] = useState("all");
+  const { dataVersion } = useSession();
   const loader = useCallback(() => listTransactions(), []);
   const { data, loading, error, refreshing, reload, refresh } =
-    useAsyncData<TransactionRecord[]>(loader);
+    useAsyncData<TransactionRecord[]>(loader, dataVersion);
 
   const transactions = useMemo(() => data ?? [], [data]);
   const visibleTransactions = transactions.filter(

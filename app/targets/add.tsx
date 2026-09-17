@@ -3,6 +3,7 @@ import CategoryPicker from "@/components/categorypicker";
 import CustomButton from "@/components/custombutton";
 import InputText from "@/components/input";
 import { createTarget } from "@/lib/finance";
+import { useSession } from "@/lib/sessionContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -34,6 +35,7 @@ export default function AddTargetScreen() {
   const [color, setColor] = useState(TARGET_COLORS[0]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { notifyDataChanged } = useSession();
 
   async function handleSave() {
     setError("");
@@ -57,6 +59,7 @@ export default function AddTargetScreen() {
         category: category || undefined,
         color,
       });
+      notifyDataChanged();
       router.back();
       router.navigate("/(tabs)/targets");
     } catch (err) {

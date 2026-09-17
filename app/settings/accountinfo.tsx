@@ -4,12 +4,8 @@ import CustomMadal from "@/components/custommodal";
 import InputText from "@/components/input";
 import { requestPasswordResetForAccount, updateUserAccount } from "@/lib/finance";
 import { isValidEmail, normalizePhone } from "@/lib/authValidation";
-import {
-  deleteUserOnBackend,
-  getSessionUser,
-  SessionUser,
-  updateSessionUser,
-} from "@/lib/session";
+import { useSession } from "@/lib/sessionContext";
+import { deleteUserOnBackend, getSessionUser, SessionUser } from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -41,6 +37,7 @@ export default function AccountInfo() {
   const [success, setSuccess] = useState("");
   const [passwordSent, setPasswordSent] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const { setUser: setSessionUser } = useSession();
 
   async function handleSendPasswordCode() {
     setSaveError("");
@@ -70,6 +67,7 @@ export default function AccountInfo() {
       setError("");
       setLoading(true);
       await deleteUserOnBackend();
+      await setSessionUser(null);
       setShowModal(false);
       router.replace("/(auth)/signup");
     } catch (error) {
@@ -99,12 +97,12 @@ export default function AccountInfo() {
         phone: normalizePhone(phone),
       });
 
-      // The PUT returns the new UserSchema; keep the local session in sync so
-      // the greeting card and other screens reflect the change immediately.
+      // The PUT returns the new UserSchema; push it into the shared session so
+      // the greeting card and every other screen reflect the change at once.
       const nextUser = { ...(updated as SessionUser) };
       if (!nextUser.id) nextUser.id = user?.id;
       setUser(nextUser);
-      await updateSessionUser(nextUser);
+      await setSessionUser(nextUser);
 
       setNewPassword("");
       setConfirmPassword("");
@@ -312,8 +310,10 @@ export default function AccountInfo() {
         </ScrollView>
       </KeyboardAvoidingView>
       <CustomMadal
-        heading="Are you sure you want to delete your Account?"
-        description="Deleting your account is an action that cannot be undone"
+        heading="Delete your account?"
+        description="This permanently removes your account and all of your records. This cannot be undone."
+        confirmLabel="Delete account"
+        cancelLabel="Keep account"
         visible={showModal}
         onClose={() => setShowModal(false)}
         onComfirm={() => handleDeleteAccount()}

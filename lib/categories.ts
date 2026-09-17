@@ -1,7 +1,26 @@
-import { DEFAULT_CATEGORIES } from "@/components/categorypicker";
 import * as SecureStore from "expo-secure-store";
 
 const CUSTOM_CATEGORIES_KEY = "custom_categories";
+
+/**
+ * Built-in categories. Lives here (in the module, not the component) so the
+ * component can import it without creating a import cycle
+ * component -> lib -> component.
+ */
+export const DEFAULT_CATEGORIES = [
+  "Food",
+  "Transport",
+  "Education",
+  "Rent",
+  "Utilities",
+  "Health",
+  "Shopping",
+  "Entertainment",
+  "Savings",
+  "Work",
+  "Gift",
+  "Other",
+];
 
 /**
  * The Goal Flow API has no categories resource — `category` is a free-text

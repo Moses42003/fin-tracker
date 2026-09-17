@@ -291,3 +291,69 @@ export async function addFundsToTarget(targetId: string, amount: string) {
     { method: "POST", token },
   );
 }
+/** Budget settings stored per user: GET/PUT .../settings/budget. */
+export interface BudgetSettings {
+  id?: string;
+  user_id?: string;
+  monthly_budget?: string | null;
+  category_budgets?: string | null;
+  currency?: string | null;
+  notification_threshold?: string;
+}
+
+/** Budget utilization: how much of the monthly budget is used. */
+export interface BudgetUtilization {
+  monthly_budget?: string | null;
+  spent?: string;
+  utilization_percentage?: number;
+  remaining?: string;
+  currency?: string | null;
+}
+
+/** Reads the signed-in user's budget settings. */
+export async function getBudgetSettings(): Promise<BudgetSettings> {
+  const { userId, token } = await requireSession();
+  const data = await apiFetch(`/api/goal/users/${userId}/settings/budget`, {
+    token,
+  });
+  return data as unknown as BudgetSettings;
+}
+
+/**
+ * Saves budget settings. The backend accepts a partial update, so only the
+ * fields the caller passes are sent.
+ */
+export async function updateBudgetSettings(input: {
+  monthlyBudget?: string;
+  currency?: string;
+  notificationThreshold?: string;
+  categoryBudgets?: string;
+}): Promise<BudgetSettings> {
+  const { userId, token } = await requireSession();
+
+  const body: Record<string, unknown> = {};
+  if (input.monthlyBudget !== undefined)
+    body.monthly_budget = input.monthlyBudget;
+  if (input.currency !== undefined) body.currency = input.currency;
+  if (input.notificationThreshold !== undefined)
+    body.notification_threshold = input.notificationThreshold;
+  if (input.categoryBudgets !== undefined)
+    body.category_budgets = input.categoryBudgets;
+
+  const data = await apiFetch(`/api/goal/users/${userId}/settings/budget`, {
+    method: "PUT",
+    token,
+    body,
+  });
+  return data as unknown as BudgetSettings;
+}
+
+/** Reads how much of the monthly budget has been used. */
+export async function getBudgetUtilization(): Promise<BudgetUtilization> {
+  const { userId, token } = await requireSession();
+  const data = await apiFetch(
+    `/api/goal/users/${userId}/settings/budget/utilization`,
+    { token },
+  );
+  return data as unknown as BudgetUtilization;
+}

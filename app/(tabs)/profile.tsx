@@ -1,33 +1,36 @@
 import CustomButton from "@/components/custombutton";
 import GreetingCard from "@/components/greetingcard";
 import SettingOption from "@/components/settingoption";
-import {
-  clearSession,
-  displayName,
-  getSessionUser,
-  SessionUser,
-} from "@/lib/session";
+import { currency } from "@/lib/format";
+import { getDashboardOverview, DashboardOverview } from "@/lib/finance";
+import { useSession } from "@/lib/sessionContext";
+import { useAsyncData } from "@/lib/useAsyncData";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileTab() {
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const { name, signOut, dataVersion } = useSession();
+  const overviewLoader = useCallback(() => getDashboardOverview(), []);
+  const { data: overview } = useAsyncData<DashboardOverview>(
+    overviewLoader,
+    dataVersion,
+  );
 
-  useEffect(() => {
-    getSessionUser().then(setUser);
-  }, []);
+  const currencyLabel = overview
+    ? `GH₵ · ${currency(overview.balance).replace("GH₵ ", "")}`
+    : "GH₵";
 
   async function handleLogout() {
-    await clearSession();
+    await signOut();
     router.replace("/(auth)/login");
   }
 
   return (
     <SafeAreaView className="flex flex-1 bg-violet-950 pt-10">
       <View className="flex flex-2 px-5 mb-4">
-        <GreetingCard name={displayName(user)} profile />
+        <GreetingCard name={name} profile />
       </View>
       <ScrollView className="flex flex-1 h-max bg-white rounded-t-3xl px-8 py-5">
         <SettingOption
@@ -35,7 +38,12 @@ export default function ProfileTab() {
           icon="person-outline"
           onPress={() => router.push("/settings/accountinfo")}
         />
-        <SettingOption value="GH₵" icon="cash-outline" name="Currency" />
+        <SettingOption
+          value={currencyLabel}
+          icon="cash-outline"
+          name="Currency"
+          onPress={() => router.push("/settings/currency")}
+        />
 
         <SettingOption
           name="Budget Settings"
@@ -48,8 +56,6 @@ export default function ProfileTab() {
           name="Notifications"
           onPress={() => router.push("/notification")}
         />
-
-        <SettingOption value="System" name="Theme" icon="color-fill-outline" />
 
         <SettingOption
           icon="cloud-outline"

@@ -1,27 +1,13 @@
-import { getCustomCategories } from "@/lib/categories";
+import {
+  DEFAULT_CATEGORIES,
+  getCustomCategories,
+} from "@/lib/categories";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-/**
- * Default categories. The Goal Flow API stores `category` as a free-text
- * string on transactions and targets (there is no category resource), so the
- * picker is a convenience list that the user can extend via Add Category.
- */
-export const DEFAULT_CATEGORIES = [
-  "Food",
-  "Transport",
-  "Education",
-  "Rent",
-  "Utilities",
-  "Health",
-  "Shopping",
-  "Entertainment",
-  "Savings",
-  "Work",
-  "Gift",
-  "Other",
-];
+// Re-exported so existing screens can keep importing it from the component.
+export { DEFAULT_CATEGORIES };
 
 interface Props {
   label?: string;

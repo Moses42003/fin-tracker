@@ -9,6 +9,12 @@ interface Props {
   onComfirm?: () => void;
   visible?: boolean;
   loading?: boolean;
+  /** Label for the confirming button (default "Delete"). */
+  confirmLabel?: string;
+  /** Colour of the confirming button (default red). */
+  confirmColor?: string;
+  /** Label for the dismissing button (default "Cancel"). */
+  cancelLabel?: string;
 }
 
 export default function CustomMadal({
@@ -18,6 +24,9 @@ export default function CustomMadal({
   visible,
   description,
   loading,
+  confirmLabel = "Delete",
+  confirmColor = "red",
+  cancelLabel = "Cancel",
 }: Props) {
   return (
     <Modal
@@ -36,17 +45,19 @@ export default function CustomMadal({
 
           <View className="flex-row items-center gap-2">
             <CustomButton
-              name="Cancel"
+              name={cancelLabel}
               color="white"
               bgColor="gray"
               onPress={onClose}
+              disabled={loading}
             />
             <CustomButton
-              name="Delete"
+              name={confirmLabel}
               color="white"
-              bgColor="red"
+              bgColor={confirmColor}
               onPress={onComfirm}
               loading={loading}
+              disabled={loading}
             />
           </View>
         </View>

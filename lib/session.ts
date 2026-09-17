@@ -113,12 +113,12 @@ export async function deleteUserOnBackend() {
     throw new Error("Your session has expired. Please log in again.");
   }
 
-  await apiFetch(`/api/goal/users/${current.id}`, {
+  // `soft_delete` must be a QUERY parameter. Sent in the JSON body it is
+  // silently ignored: the server replies 200 and the account survives, which
+  // is exactly the bug this fixes. `soft_delete=false` performs a real delete.
+  await apiFetch(`/api/goal/users/${current.id}?soft_delete=false`, {
     method: "DELETE",
     token,
-    body: {
-      soft_delete: false,
-    },
   });
 
   await clearSession();

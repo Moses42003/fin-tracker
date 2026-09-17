@@ -1,6 +1,7 @@
 import TargetCard from "@/components/targetcard";
 import { listTargets, TargetResponse } from "@/lib/finance";
 import { toNumber } from "@/lib/format";
+import { useSession } from "@/lib/sessionContext";
 import { useAsyncData } from "@/lib/useAsyncData";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -17,10 +18,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TargetsTab() {
+  const { dataVersion } = useSession();
   const loader = useCallback(() => listTargets(), []);
   const { data, loading, error, refreshing, reload, refresh } =
-    useAsyncData<TargetResponse[]>(loader);
+    useAsyncData<TargetResponse[]>(loader, dataVersion);
   const targets = data ?? [];
+  const completedTargets = targets.filter(
+    (target) => target.status === "completed",
+  );
 
   return (
     <SafeAreaView className="flex flex-1 bg-white">
@@ -65,6 +70,21 @@ export default function TargetsTab() {
           </View>
         ) : targets.length ? (
           <View className="flex gap-3">
+            {completedTargets.length ? (
+              <View className="rounded-3xl bg-amber-50 border-2 border-amber-200 p-4 mb-1">
+                <View className="flex-row items-center gap-2">
+                  <Ionicons name="trophy" size={22} color="#d97706" />
+                  <Text className="text-lg font-bold text-amber-800">
+                    {completedTargets.length} target
+                    {completedTargets.length > 1 ? "s" : ""} completed
+                  </Text>
+                </View>
+                <Text className="text-amber-700 mt-1">
+                  Nice work — you hit every one of these goals.
+                </Text>
+              </View>
+            ) : null}
+
             {targets.map((target) => (
               <TargetCard
                 key={target.id}
@@ -72,6 +92,8 @@ export default function TargetsTab() {
                 name={target.name}
                 amountDone={toNumber(target.current_amount)}
                 totalAmount={toNumber(target.target_amount)}
+                status={target.status}
+                color={target.color}
               />
             ))}
           </View>

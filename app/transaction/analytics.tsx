@@ -4,6 +4,7 @@ import {
   getDashboardSummary,
 } from "@/lib/finance";
 import { currency as formatCurrency, toNumber } from "@/lib/format";
+import { useSession } from "@/lib/sessionContext";
 import { useAsyncData } from "@/lib/useAsyncData";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback } from "react";
@@ -20,9 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const currency = (value: number) => formatCurrency(value);
 
 export default function AnalyticScreen() {
+  const { dataVersion } = useSession();
   const loader = useCallback(() => getDashboardSummary(), []);
-  const { data, loading, error, refreshing, refresh } =
-    useAsyncData<DashboardSummary>(loader);
+  const { data, loading, error, refreshing, refresh } = useAsyncData<
+    DashboardSummary
+  >(loader, dataVersion);
 
   const summary = {
     balance: toNumber(data?.total_balance),
