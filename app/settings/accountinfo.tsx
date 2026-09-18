@@ -57,8 +57,6 @@ export default function AccountInfo() {
   const [success, setSuccess] = useState("");
   const [passwordSent, setPasswordSent] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setUser: setSessionUser, notifyDataChanged } = useSession();
 
   async function handleSendPasswordCode() {
@@ -368,18 +366,15 @@ export default function AccountInfo() {
             <InputText
               placeHolder="New Password"
               icon="lock-closed-outline"
-              secure={showNewPassword ? false : true}
+              secure
               value={newPassword}
               onChangeText={setNewPassword}
               editable={!passwordLoading}
             />
-            <Text className="text-gray-500 text-sm capitalize" onPress={() => setShowNewPassword(true)}>
-              {showNewPassword ? "Hide" : "Show"} password
-            </Text>
             <InputText
               placeHolder="Confirm Password"
               icon="lock-closed-outline"
-              secure={showConfirmPassword ? false : true}
+              secure
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               editable={!passwordLoading}
@@ -387,9 +382,6 @@ export default function AccountInfo() {
                 confirmPassword && newPassword !== confirmPassword,
               )}
             />
-            <Text className="text-gray-500 text-sm capitalize" onPress={() => setShowConfirmPassword(true)}>
-              {showConfirmPassword ? "Hide" : "Show"} password
-            </Text>
 
             <Text className="text-gray-500 px-1">
               For your security, we email you a 6-digit code before your

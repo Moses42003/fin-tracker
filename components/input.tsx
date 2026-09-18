@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef } from "react";
-import { TextInput, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { TextInput, TouchableOpacity, View } from "react-native";
 
 interface Props {
   placeHolder?: string;
@@ -12,7 +12,6 @@ interface Props {
   editable?: boolean;
   error?: boolean;
   onBlur?: () => void;
-  showPassword?: boolean;
 }
 
 export default function InputText({
@@ -25,13 +24,16 @@ export default function InputText({
   editable = true,
   error = false,
   onBlur,
-  showPassword = false,
 }: Props) {
-  const inputRef = useRef(null);
+  const inputRef = useRef<TextInput | null>(null);
+  // Managed internally so any password field gets a working eye toggle without
+  // every screen having to hold its own visibility state.
+  const [revealed, setRevealed] = useState(false);
+
   return (
     <View
-      className={`flex-1 border-2 p-2 rounded-2xl bg-white my-3 ${
-        error ? "border-red-500 bg-red-50" : "border-gray-300"
+      className={`flex-1 border-2 p-2 rounded-2xl bg-white dark:bg-slate-900 my-3 ${
+        error ? "border-red-500 bg-red-50" : "border-gray-300 dark:border-slate-700"
       }`}
     >
       <View className="flex-row gap-3 items-center">
@@ -42,19 +44,34 @@ export default function InputText({
           color="gray"
         />
         <TextInput
-          // @ts-ignore
-          onPress={() => inputRef.current?.focus()}
+          ref={inputRef}
           placeholder={placeHolder || "PlaceHolder"}
           placeholderTextColor="gray"
-          secureTextEntry={secure ? !showPassword : false}
+          secureTextEntry={secure ? !revealed : false}
           editable={editable}
           onBlur={onBlur}
           onChangeText={onChangeText}
           value={value}
           // @ts-ignore
           keyboardType={keyboardType}
-          className="text-lg flex-1 h-10 text-gray-700 font-semibold"
+          autoCapitalize={secure ? "none" : undefined}
+          autoCorrect={secure ? false : undefined}
+          className="text-lg flex-1 h-10 text-gray-700 dark:text-slate-200 font-semibold"
         />
+
+        {secure ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setRevealed((current) => !current)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={revealed ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="gray"
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
