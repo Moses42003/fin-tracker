@@ -163,6 +163,28 @@ export async function requestPasswordResetForAccount(target: string) {
     body: { target },
   });
 }
+
+/**
+ * Completes a password change with the 6-digit code that was emailed.
+ *
+ * Contract (PUT /api/goal/users/reset_password): `code` must be exactly 6
+ * digits. The request only receives a code AFTER the forgot-password call
+ * succeeds, which is why the code field is revealed on success.
+ */
+export async function resetPasswordWithCode(input: {
+  target: string;
+  code: string;
+  newPassword: string;
+}) {
+  return apiFetch("/api/goal/users/reset_password", {
+    method: "PUT",
+    body: {
+      target: input.target,
+      code: input.code,
+      new_password: input.newPassword,
+    },
+  });
+}
 /** A transaction row as returned by the API (amounts are strings, "25.50"). */
 export interface TransactionRecord {
   id: string;

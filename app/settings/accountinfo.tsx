@@ -5,6 +5,7 @@ import InputText from "@/components/input";
 import {
   deleteProfilePicture,
   requestPasswordResetForAccount,
+  resetPasswordWithCode,
   updateUserAccount,
   uploadProfilePicture,
 } from "@/lib/finance";
@@ -77,28 +78,76 @@ export default function AccountInfo() {
   const [success, setSuccess] = useState("");
   const [passwordSent, setPasswordSent] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordCode, setPasswordCode] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const { setUser: setSessionUser, notifyDataChanged } = useSession();
 
   async function handleSendPasswordCode() {
     setSaveError("");
     setSuccess("");
-    const target = email.trim().toLowerCase() || normalizePhone(phone);
-    if (!target) {
-      setSaveError("Add an email or phone number first.");
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!email.trim() || !isValidEmail(email)) {
+      setPasswordError("A valid email address is needed to send the code.");
       return;
     }
+
     setPasswordLoading(true);
     try {
-      await requestPasswordResetForAccount(target);
+      // The reset endpoint needs the 6-digit code it emails, so the code and
+      // new-password fields are only revealed once this succeeds.
+      await requestPasswordResetForAccount(email.trim().toLowerCase());
       setPasswordSent(true);
+      setPasswordCode("");
     } catch (err) {
-      setSaveError(
+      setPasswordError(
         err instanceof Error
           ? err.message
-          : "Unable to start the password reset.",
+          : "Unable to send the reset code.",
       );
     } finally {
       setPasswordLoading(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!/^\d{6}$/.test(passwordCode.trim())) {
+      setPasswordError("Enter the 6-digit code sent to your email.");
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
+      setPasswordError("Enter and confirm your new password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("The passwords do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await resetPasswordWithCode({
+        target: email.trim().toLowerCase(),
+        code: passwordCode.trim(),
+        newPassword,
+      });
+      setPasswordSuccess("Your password has been changed.");
+      setPasswordSent(false);
+      setPasswordCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setPasswordError(
+        err instanceof Error ? err.message : "Unable to change your password.",
+      );
+    } finally {
+      setChangingPassword(false);
     }
   }
 
@@ -388,48 +437,105 @@ export default function AccountInfo() {
               </Text>
             </View>
 
-            <InputText
-              placeHolder="New Password"
-              icon="lock-closed-outline"
-              secure
-              value={newPassword}
-              onChangeText={setNewPassword}
-              editable={!passwordLoading}
-            />
-            <InputText
-              placeHolder="Confirm Password"
-              icon="lock-closed-outline"
-              secure
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              editable={!passwordLoading}
-              error={Boolean(
-                confirmPassword && newPassword !== confirmPassword,
-              )}
-            />
+            {!passwordSent ? (
+              <Text className="text-gray-500 px-1">
+                For your security, we email you a 6-digit code before your
+                password can be changed. Request the code first, then enter it
+                below.
+              </Text>
+            ) : null}
 
-            <Text className="text-gray-500 px-1">
-              For your security, we email you a 6-digit code before your
-              password can be changed.
-            </Text>
-
-            {passwordSent ? (
-              <View className="flex-row items-center gap-2 rounded-2xl bg-blue-50 border-blue-200 px-3 py-3 mt-2">
-                <Ionicons name="mail-outline" size={20} color="#2563eb" />
-                <Text className="flex-1 text-blue-700 font-semibold">
-                  Code sent. Enter it with your new password to finish.
+            {passwordError ? (
+              <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 border-2 border-red-200 px-3 py-3 mt-2">
+                <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                <Text className="flex-1 text-red-700 font-semibold">
+                  {passwordError}
                 </Text>
               </View>
             ) : null}
 
-            <CustomButton
-              name="Send Reset Code"
-              bgColor="#0f172a"
-              color="white"
-              loading={passwordLoading}
-              disabled={passwordLoading}
-              onPress={handleSendPasswordCode}
-            />
+            {passwordSuccess ? (
+              <View className="flex-row items-center gap-2 rounded-2xl bg-green-50 border-2 border-green-200 px-3 py-3 mt-2">
+                <Ionicons name="checkmark-circle" size={20} color="#16a34a" />
+                <Text className="flex-1 text-green-700 font-semibold">
+                  {passwordSuccess}
+                </Text>
+              </View>
+            ) : null}
+
+            {!passwordSent ? (
+              <CustomButton
+                name="Send Reset Code"
+                bgColor="#0f172a"
+                color="white"
+                loading={passwordLoading}
+                disabled={passwordLoading}
+                onPress={handleSendPasswordCode}
+              />
+            ) : (
+              <>
+                <View className="flex-row items-center gap-2 rounded-2xl bg-blue-50 border-2 border-blue-200 px-3 py-3 mt-2">
+                  <Ionicons name="mail-outline" size={20} color="#2563eb" />
+                  <Text className="flex-1 text-blue-700 font-semibold">
+                    We emailed a 6-digit code to {email}. Enter it below with
+                    your new password.
+                  </Text>
+                </View>
+
+                {/* Revealed only after the code request succeeds. */}
+                <InputText
+                  placeHolder="6-digit code"
+                  icon="key-outline"
+                  keyboardType="number-pad"
+                  value={passwordCode}
+                  onChangeText={setPasswordCode}
+                  editable={!changingPassword}
+                />
+                <InputText
+                  placeHolder="New Password"
+                  icon="lock-closed-outline"
+                  secure
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  editable={!changingPassword}
+                />
+                <InputText
+                  placeHolder="Confirm Password"
+                  icon="lock-closed-outline"
+                  secure
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  editable={!changingPassword}
+                  error={Boolean(
+                    confirmPassword && newPassword !== confirmPassword,
+                  )}
+                />
+
+                <CustomButton
+                  name="Change Password"
+                  bgColor="#2563eb"
+                  color="white"
+                  loading={changingPassword}
+                  disabled={changingPassword}
+                  onPress={handleChangePassword}
+                />
+
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    if (changingPassword) return;
+                    setPasswordSent(false);
+                    setPasswordError("");
+                    setPasswordCode("");
+                  }}
+                >
+                  <View className="items-center py-2">
+                    <Text className="text-gray-500 font-semibold">
+                      Didn&apos;t get the code? Start over
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+              </>
+            )}
           </View>
 
           <View className="p-2 rounded-2xl border-2 border-gray-300 bg-white my-3">

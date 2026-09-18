@@ -13,6 +13,7 @@ interface Props {
     | "cloud-outline"
     | "color-fill-outline"
     | "wallet-outline"
+    | "mail-unread-outline"
     | "";
   onPress?: () => void;
 }

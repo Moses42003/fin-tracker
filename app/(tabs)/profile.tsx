@@ -53,7 +53,13 @@ export default function ProfileTab() {
 
         <SettingOption
           icon="notifications-outline"
-          name="Notifications"
+          name="Notification Settings"
+          onPress={() => router.push("/settings/notifications")}
+        />
+
+        <SettingOption
+          icon="mail-unread-outline"
+          name="Inbox"
           onPress={() => router.push("/notification")}
         />
 

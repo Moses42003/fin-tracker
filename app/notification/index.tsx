@@ -5,7 +5,14 @@ import {
   NotificationRecord,
 } from "@/lib/finance";
 import { shortDate } from "@/lib/format";
+import {
+  categoryForType,
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getNotificationPreferences,
+  NotificationPreferences,
+} from "@/lib/notificationPreferences";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,12 +29,29 @@ export default function NotificationScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [prefs, setPrefs] = useState<NotificationPreferences>(
+    DEFAULT_NOTIFICATION_PREFERENCES,
+  );
+  // Hidden by the user's own display preferences. Kept separate so the empty
+  // state can explain why the list looks bare.
+  const [hiddenCount, setHiddenCount] = useState(0);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     setError("");
     try {
-      setNotifications(await listNotifications());
+      const [items, preferences] = await Promise.all([
+        listNotifications(),
+        getNotificationPreferences(),
+      ]);
+      setPrefs(preferences);
+
+      const visible = items.filter((item) => {
+        if (!preferences.enabled) return false;
+        return preferences.categories[categoryForType(item.type)];
+      });
+      setHiddenCount(items.length - visible.length);
+      setNotifications(visible);
     } catch (err) {
       setError(
         err instanceof Error
@@ -111,10 +135,22 @@ export default function NotificationScreen() {
               color="#94a3b8"
             />
             <Text className="text-2xl font-bold dark:text-slate-100 mt-4">
-              All clear
+              {hiddenCount > 0 || !prefs.enabled
+                ? "Notifications hidden"
+                : "All clear"}
             </Text>
             <Text className="text-gray-500 dark:text-slate-400 text-center mt-2">
-              No notifications yet. We will let you know when something happens.
+              {!prefs.enabled
+                ? "Notifications are switched off in your settings."
+                : hiddenCount > 0
+                  ? `${hiddenCount} notification${hiddenCount > 1 ? "s are" : " is"} hidden by your filters.`
+                  : "No notifications yet. We will let you know when something happens."}
+            </Text>
+            <Text
+              className="text-blue-600 font-semibold mt-4"
+              onPress={() => router.push("/settings/notifications")}
+            >
+              Manage notification settings
             </Text>
           </View>
         ) : (
