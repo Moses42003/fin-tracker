@@ -35,6 +35,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 
+/**
+ * Converts a picked image URI into something safe to store.
+ *
+ * Native file:// URIs are stable and returned as-is. On web the picker returns
+ * a blob: URL that is invalidated on reload, so it is read into a data URL.
+ */
+async function toPersistableUri(uri: string, mimeType?: string | null) {
+  if (!uri.startsWith("blob:")) return uri;
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Unable to read the image."));
+    reader.readAsDataURL(
+      blob.type ? blob : new Blob([blob], { type: mimeType || "image/jpeg" }),
+    );
+  });
+}
+
 export default function AccountInfo() {
   const [showModal, setShowModal] = useState(false);
 
@@ -131,9 +151,14 @@ export default function AccountInfo() {
         name: asset.fileName || "profile-picture.jpg",
         type: asset.mimeType || "image/jpeg",
       });
-      // Cache locally: the API stores the file but serves no image URL, so this
-      // local copy is what every avatar in the app renders.
-      await saveProfileImage(asset.uri);
+      // Cache the local copy: the API stores the file but serves no image URL,
+      // so this is what every avatar in the app renders.
+      //
+      // On web the picker hands back a blob: URL, which dies on reload, so it is
+      // converted to a data URL first; on native the file:// URI is stable.
+      const cachedUri = await toPersistableUri(asset.uri, asset.mimeType);
+      await saveProfileImage(cachedUri);
+      setProfileImage(cachedUri);
       setImageSuccess("Your profile picture has been updated.");
       notifyDataChanged();
     } catch (err) {

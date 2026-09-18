@@ -1,7 +1,8 @@
 import { getProfileImageUri } from "@/lib/session";
+import { useSession } from "@/lib/sessionContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image, View } from "react-native";
 
 interface Props {
@@ -32,24 +33,34 @@ export default function ProfileAvatar({
   backgroundColor = "#ffffff",
 }: Props) {
   const [uri, setUri] = useState<string | null>(null);
+  // dataVersion is bumped by the account screen after an upload, so every
+  // avatar in the app reloads without waiting for a screen focus event.
+  const { dataVersion } = useSession();
+  // Bumped on every reload so a late-resolving read can be ignored.
+  const requestId = useRef(0);
 
-  // Re-read whenever the screen regains focus so a new upload shows up right
-  // after returning from the account screen.
+  const load = useCallback(() => {
+    const id = ++requestId.current;
+    getProfileImageUri()
+      .then((value) => {
+        // Only apply the newest read; an older one may resolve later.
+        if (id === requestId.current) setUri(value);
+      })
+      .catch(() => {
+        // A missing cache is not an error; the placeholder is shown.
+      });
+  }, []);
+
+  // Reload on focus (returning from the account screen) and whenever the shared
+  // data version changes (an upload happened while this screen stayed mounted).
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      getProfileImageUri()
-        .then((value) => {
-          if (active) setUri(value);
-        })
-        .catch(() => {
-          // A missing cache is not an error; the placeholder is shown.
-        });
-      return () => {
-        active = false;
-      };
-    }, []),
+      load();
+    }, [load]),
   );
+  useEffect(() => {
+    load();
+  }, [load, dataVersion]);
 
   return (
     <View
