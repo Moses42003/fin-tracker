@@ -1,10 +1,19 @@
 import { apiFetch } from "@/lib/api";
-import * as SecureStore from "expo-secure-store";
+import { deleteItem, getItem, setItem } from "@/lib/storage";
 
 export const SESSION_TOKEN_KEY = "auth_token";
 export const SESSION_USER_KEY = "auth_user";
 export const PENDING_TOKEN_KEY = "pending_auth_token";
 export const PENDING_CREDENTIALS_KEY = "pending_auth_credentials";
+
+/**
+ * Local URI of the picked profile picture.
+ *
+ * The backend stores the upload but exposes no endpoint returning the image
+ * bytes (its profile-picture route is metadata-only), so the app keeps the
+ * device URI and renders that. See `uploadProfilePicture` in lib/finance.
+ */
+export const PROFILE_IMAGE_KEY = "profile_image_uri";
 
 export interface SessionUser {
   id?: string;
@@ -13,10 +22,12 @@ export interface SessionUser {
   username?: string | null;
   email?: string | null;
   phone?: string | null;
+  /** Server-side path, e.g. "uploads/<uuid>.png". */
+  profile_picture?: string | null;
 }
 
 export async function saveSession(token: string, fallbackUser?: SessionUser) {
-  await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
+  await setItem(SESSION_TOKEN_KEY, token);
   let user = fallbackUser;
   try {
     user = await apiFetch("/auth/me", {
@@ -27,18 +38,18 @@ export async function saveSession(token: string, fallbackUser?: SessionUser) {
     user = fallbackUser;
   }
   if (user) {
-    await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(user));
+    await setItem(SESSION_USER_KEY, JSON.stringify(user));
   }
   return user;
 }
 
 export async function savePendingToken(token: string) {
-  await SecureStore.setItemAsync(PENDING_TOKEN_KEY, token);
+  await setItem(PENDING_TOKEN_KEY, token);
 }
 
 export async function consumePendingToken() {
-  const token = await SecureStore.getItemAsync(PENDING_TOKEN_KEY);
-  if (token) await SecureStore.deleteItemAsync(PENDING_TOKEN_KEY);
+  const token = await getItem(PENDING_TOKEN_KEY);
+  if (token) await deleteItem(PENDING_TOKEN_KEY);
   return token;
 }
 
@@ -46,15 +57,15 @@ export async function savePendingCredentials(
   username: string,
   password: string,
 ) {
-  await SecureStore.setItemAsync(
+  await setItem(
     PENDING_CREDENTIALS_KEY,
     JSON.stringify({ username, password }),
   );
 }
 
 export async function consumePendingCredentials() {
-  const raw = await SecureStore.getItemAsync(PENDING_CREDENTIALS_KEY);
-  if (raw) await SecureStore.deleteItemAsync(PENDING_CREDENTIALS_KEY);
+  const raw = await getItem(PENDING_CREDENTIALS_KEY);
+  if (raw) await deleteItem(PENDING_CREDENTIALS_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as { username: string; password: string };
@@ -64,7 +75,7 @@ export async function consumePendingCredentials() {
 }
 
 export async function getSessionUser() {
-  const raw = await SecureStore.getItemAsync(SESSION_USER_KEY);
+  const raw = await getItem(SESSION_USER_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as SessionUser;
@@ -76,7 +87,7 @@ export async function getSessionUser() {
 export async function updateSessionUser(updates: Partial<SessionUser>) {
   const current = (await getSessionUser()) || {};
   const next = { ...current, ...updates };
-  await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(next));
+  await setItem(SESSION_USER_KEY, JSON.stringify(next));
   return next;
 }
 
@@ -99,10 +110,12 @@ export async function updateUserOnBackend(updates: Partial<SessionUser>) {
       last_name: updates.last_name ?? current.last_name ?? null,
       phone: updates.phone ?? current.phone ?? null,
       username: updates.username ?? current.username ?? null,
+      // The picture is uploaded separately via uploadProfilePicture; the users
+      // PUT does not accept an image field.
     },
   });
 
-  await SecureStore.setItemAsync(SESSION_USER_KEY, JSON.stringify(updated));
+  await setItem(SESSION_USER_KEY, JSON.stringify(updated));
   return updated as SessionUser;
 }
 
@@ -126,14 +139,30 @@ export async function deleteUserOnBackend() {
 }
 
 export async function getSessionToken() {
-  return SecureStore.getItemAsync(SESSION_TOKEN_KEY);
+  return getItem(SESSION_TOKEN_KEY);
+}
+
+/** Caches the local URI of the user's chosen profile picture. */
+export async function saveProfileImage(uri: string) {
+  await setItem(PROFILE_IMAGE_KEY, uri);
+}
+
+/** Reads the cached local profile image URI, if any. */
+export async function getProfileImageUri() {
+  return getItem(PROFILE_IMAGE_KEY);
+}
+
+/** Clears the cached profile image (used when the picture is removed). */
+export async function clearProfileImage() {
+  await deleteItem(PROFILE_IMAGE_KEY);
 }
 
 export async function clearSession() {
-  await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(SESSION_USER_KEY);
-  await SecureStore.deleteItemAsync(PENDING_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(PENDING_CREDENTIALS_KEY);
+  await deleteItem(SESSION_TOKEN_KEY);
+  await deleteItem(SESSION_USER_KEY);
+  await deleteItem(PENDING_TOKEN_KEY);
+  await deleteItem(PENDING_CREDENTIALS_KEY);
+  await deleteItem(PROFILE_IMAGE_KEY);
 }
 
 export function displayName(user?: SessionUser | null) {

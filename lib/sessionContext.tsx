@@ -5,6 +5,7 @@ import {
   saveSession,
   SessionUser,
 } from "@/lib/session";
+import { getItem, setItem } from "@/lib/storage";
 import React, {
   createContext,
   useCallback,
@@ -79,8 +80,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const key = welcomeKeyFor(user);
     if (!key) return;
     let active = true;
-    import("expo-secure-store").then(async (SecureStore) => {
-      const seen = await SecureStore.getItemAsync(WELCOME_SEEN_KEY);
+    getItem(WELCOME_SEEN_KEY).then((seen) => {
       if (!active) return;
       if (seen !== key) {
         setWelcomeVisible(true);
@@ -95,9 +95,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setWelcomeVisible(false);
     const key = welcomeKeyFor(user);
     if (!key) return;
-    import("expo-secure-store").then((SecureStore) =>
-      SecureStore.setItemAsync(WELCOME_SEEN_KEY, key),
-    );
+    setItem(WELCOME_SEEN_KEY, key);
   }, [user]);
 
   const setUser = useCallback(async (next: SessionUser | null) => {

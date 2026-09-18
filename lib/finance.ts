@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, apiFetch, buildQuery } from "@/lib/api";
+import { API_ENDPOINTS, apiFetch, apiUpload, buildQuery } from "@/lib/api";
 import { getSessionToken, getSessionUser } from "@/lib/session";
 
 /**
@@ -358,4 +358,109 @@ export async function getBudgetUtilization(): Promise<BudgetUtilization> {
     { token },
   );
   return data as unknown as BudgetUtilization;
+}
+export interface ProfilePictureUpload {
+  filename?: string;
+  filepath?: string;
+  file_id?: string;
+}
+
+/**
+ * Uploads a new profile picture.
+ *
+ * Note: this sets `profile_picture` on the user server-side automatically, so
+ * no separate save call is needed. The response is metadata only
+ * ({filename, filepath, file_id}) — the backend does not expose a URL that
+ * serves the image bytes, so callers should display their local copy and keep
+ * it cached (see `saveProfileImage`).
+ *
+ * @param {{ uri: string, name?: string, type?: string }} file
+ */
+export async function uploadProfilePicture(file: {
+  uri: string;
+  name?: string;
+  type?: string;
+}): Promise<ProfilePictureUpload> {
+  const { userId, token } = await requireSession();
+  const data = await apiUpload(API_ENDPOINTS.uploadProfilePicture(userId), file, {
+    field: "file",
+    token,
+  });
+  return (data ?? {}) as ProfilePictureUpload;
+}
+
+/** Metadata about the stored picture (not the image bytes). */
+export async function getProfilePictureMeta() {
+  const { userId, token } = await requireSession();
+  const data = await apiFetch(API_ENDPOINTS.profilePicture(userId), { token });
+  return data as unknown as {
+    file_id?: string;
+    filename?: string;
+    filepath?: string;
+  };
+}
+
+/** Removes the stored profile picture server-side. */
+export async function deleteProfilePicture() {
+  const { userId, token } = await requireSession();
+  return apiFetch(API_ENDPOINTS.deleteProfilePicture(userId), {
+    method: "DELETE",
+    token,
+  });
+}
+/**
+ * A notification row as returned by the API.
+ *
+ * Note the endpoint shape: notifications live at
+ * `/api/goal/notifications/{user_id}/` — the user id is a PATH segment, not a
+ * query parameter and not nested under `/users/`. The older
+ * `/api/goal/notifications` path returns 404.
+ */
+export interface NotificationRecord {
+  id: string;
+  user_id: string;
+  type?: string;
+  title?: string | null;
+  message?: string | null;
+  data?: unknown;
+  is_read?: boolean;
+  created_at?: string;
+}
+
+/** Lists the signed-in user's notifications, newest first. */
+export async function listNotifications(): Promise<NotificationRecord[]> {
+  const { userId, token } = await requireSession();
+  const data = await apiFetch(`/api/goal/notifications/${userId}/`, { token });
+  return Array.isArray(data) ? (data as NotificationRecord[]) : [];
+}
+
+/**
+ * Marks a single notification as read.
+ * Path is `/notifications/{user_id}/{notification_id}/read` — the user id comes
+ * BEFORE the notification id.
+ */
+export async function markNotificationRead(notificationId: string) {
+  const { userId, token } = await requireSession();
+  return apiFetch(
+    `/api/goal/notifications/${userId}/${notificationId}/read`,
+    { method: "PUT", token },
+  );
+}
+
+/** Marks every notification for the signed-in user as read (POST, not PUT). */
+export async function markAllNotificationsRead() {
+  const { userId, token } = await requireSession();
+  return apiFetch(`/api/goal/notifications/${userId}/mark-all-read`, {
+    method: "POST",
+    token,
+  });
+}
+
+/** Deletes a single notification. */
+export async function deleteNotification(notificationId: string) {
+  const { userId, token } = await requireSession();
+  return apiFetch(
+    `/api/goal/notifications/${userId}/${notificationId}`,
+    { method: "DELETE", token },
+  );
 }

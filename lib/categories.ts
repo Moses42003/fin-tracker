@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import { getItem, setItem } from "@/lib/storage";
 
 const CUSTOM_CATEGORIES_KEY = "custom_categories";
 
@@ -28,7 +28,7 @@ export const DEFAULT_CATEGORIES = [
  * the device and offered everywhere a category is chosen.
  */
 export async function getCustomCategories(): Promise<string[]> {
-  const raw = await SecureStore.getItemAsync(CUSTOM_CATEGORIES_KEY);
+  const raw = await getItem(CUSTOM_CATEGORIES_KEY);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -64,13 +64,13 @@ export async function addCustomCategory(name: string): Promise<string[]> {
   }
 
   const next = [...custom, trimmed];
-  await SecureStore.setItemAsync(CUSTOM_CATEGORIES_KEY, JSON.stringify(next));
+  await setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(next));
   return next;
 }
 
 export async function removeCustomCategory(name: string): Promise<string[]> {
   const custom = await getCustomCategories();
   const next = custom.filter((item) => item !== name);
-  await SecureStore.setItemAsync(CUSTOM_CATEGORIES_KEY, JSON.stringify(next));
+  await setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(next));
   return next;
 }

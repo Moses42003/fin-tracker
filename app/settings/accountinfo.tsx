@@ -2,22 +2,35 @@ import BackText from "@/components/backtext";
 import CustomButton from "@/components/custombutton";
 import CustomMadal from "@/components/custommodal";
 import InputText from "@/components/input";
-import { requestPasswordResetForAccount, updateUserAccount } from "@/lib/finance";
+import {
+  deleteProfilePicture,
+  requestPasswordResetForAccount,
+  updateUserAccount,
+  uploadProfilePicture,
+} from "@/lib/finance";
 import { isValidEmail, normalizePhone } from "@/lib/authValidation";
 import { useSession } from "@/lib/sessionContext";
-import { deleteUserOnBackend, getSessionUser, SessionUser } from "@/lib/session";
+import {
+  clearProfileImage,
+  deleteUserOnBackend,
+  getProfileImageUri,
+  getSessionUser,
+  saveProfileImage,
+  SessionUser,
+} from "@/lib/session";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StatusBar,
   Text,
-  View,
-  Image,
   TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -32,6 +45,9 @@ export default function AccountInfo() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageSuccess, setImageSuccess] = useState("");
   const [user, setUser] = useState<SessionUser | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -43,7 +59,7 @@ export default function AccountInfo() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { setUser: setSessionUser } = useSession();
+  const { setUser: setSessionUser, notifyDataChanged } = useSession();
 
   async function handleSendPasswordCode() {
     setSaveError("");
@@ -87,16 +103,67 @@ export default function AccountInfo() {
   }
 
   async function handleChooseImage() {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    setImageError("");
+    setImageSuccess("");
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setImageError(
+        "Photo access is needed to choose a picture. Enable it in Settings.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [1, 1],
       quality: 0.8,
     });
 
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setProfileImage(uri);
+    if (result.canceled || !result.assets?.length) return;
+
+    const asset = result.assets[0];
+    // Show the picked image immediately, then persist it.
+    setProfileImage(asset.uri);
+    setUploadingImage(true);
+    try {
+      await uploadProfilePicture({
+        uri: asset.uri,
+        name: asset.fileName || "profile-picture.jpg",
+        type: asset.mimeType || "image/jpeg",
+      });
+      // Cache locally: the API stores the file but serves no image URL, so this
+      // local copy is what every avatar in the app renders.
+      await saveProfileImage(asset.uri);
+      setImageSuccess("Your profile picture has been updated.");
+      notifyDataChanged();
+    } catch (err) {
+      setProfileImage(null);
+      setImageError(
+        err instanceof Error ? err.message : "Unable to upload your picture.",
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function handleRemoveImage() {
+    setImageError("");
+    setImageSuccess("");
+    setUploadingImage(true);
+    try {
+      await deleteProfilePicture();
+      await clearProfileImage();
+      setProfileImage(null);
+      setImageSuccess("Your profile picture has been removed.");
+      notifyDataChanged();
+    } catch (err) {
+      setImageError(
+        err instanceof Error ? err.message : "Unable to remove your picture.",
+      );
+    } finally {
+      setUploadingImage(false);
     }
   }
 
@@ -109,6 +176,8 @@ export default function AccountInfo() {
     }
     setSaveLoading(true);
     try {
+      // Note: the picture is uploaded separately in handleChooseImage — the
+      // users PUT does not accept an image field.
       const updated = await updateUserAccount({
         email: email.trim().toLowerCase(),
         firstName,
@@ -144,6 +213,8 @@ export default function AccountInfo() {
       setPhone(sessionUser?.phone || "");
       setEmail(sessionUser?.email || "");
     });
+    // Reflect an already-saved picture when the screen opens.
+    getProfileImageUri().then(setProfileImage);
   }, []);
 
   return (
@@ -166,32 +237,77 @@ export default function AccountInfo() {
             </Text>
           </View>
 
-          <View className="p-2 rounded-2xl border-2 border-gray-300 bg-white">
-            <TouchableWithoutFeedback onPress={handleChooseImage}>
-              <View className="flex-1 justify-center items-center my-3">
-                {profileImage ? (
-                  <Image
-                    source={{ uri: profileImage }}
-                    className="w-36 h-36 rounded-full object-cover"
-                  />
-                ) : (
-                  <View className="w-36 h-36 rounded-full bg-blue-800">
-                    <Ionicons
-                      name="person-outline"
-                      size={28}
-                      color="white"
-                    />
+          <View className="p-4 rounded-2xl border-2 border-gray-300 bg-white">
+            <View className="items-center">
+              <TouchableWithoutFeedback
+                onPress={handleChooseImage}
+                disabled={uploadingImage}
+              >
+                <View className="items-center justify-center">
+                  <View className="w-36 h-36 rounded-full bg-blue-800 overflow-hidden items-center justify-center">
+                    {profileImage ? (
+                      <Image
+                        source={{ uri: profileImage }}
+                        style={{ width: 144, height: 144 }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons name="person" size={64} color="white" />
+                    )}
+
+                    {uploadingImage ? (
+                      <View className="absolute inset-0 bg-black/40 items-center justify-center">
+                        <ActivityIndicator color="white" />
+                      </View>
+                    ) : null}
                   </View>
-                )}
-                <View className="absolute top-2 right-2">
-                  <Ionicons
-                    name="add-outline"
-                    size={20}
-                    color="white"
-                  />
+
+                  {/* Camera badge hints that the avatar is tappable. */}
+                  <View className="absolute bottom-0 right-0 w-11 h-11 rounded-full bg-blue-600 border-4 border-white items-center justify-center">
+                    <Ionicons name="camera" size={20} color="white" />
+                  </View>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
+              </TouchableWithoutFeedback>
+
+              <Text className="text-gray-500 text-center mt-3">
+                Tap the picture to change it
+              </Text>
+
+              {imageError ? (
+                <View className="w-full flex-row items-center gap-2 rounded-2xl bg-red-50 border-2 border-red-200 px-3 py-3 mt-3">
+                  <Ionicons name="alert-circle" size={20} color="#dc2626" />
+                  <Text className="flex-1 text-red-700 font-semibold">
+                    {imageError}
+                  </Text>
+                </View>
+              ) : null}
+
+              {imageSuccess ? (
+                <View className="w-full flex-row items-center gap-2 rounded-2xl bg-green-50 border-2 border-green-200 px-3 py-3 mt-3">
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color="#16a34a"
+                  />
+                  <Text className="flex-1 text-green-700 font-semibold">
+                    {imageSuccess}
+                  </Text>
+                </View>
+              ) : null}
+
+              {profileImage ? (
+                <TouchableWithoutFeedback
+                  onPress={handleRemoveImage}
+                  disabled={uploadingImage}
+                >
+                  <View className="mt-3">
+                    <Text className="text-red-600 font-semibold">
+                      Remove picture
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+              ) : null}
+            </View>
           </View>
 
           <View className="flex-1">
